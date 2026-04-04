@@ -8,7 +8,7 @@ const { ADMIN_ACTION_RATE_LIMIT_MS, GAME_PHASES } = require('./constants');
 const { AppError, createError, serializeError } = require('./errors');
 const { GameEngine } = require('./game-engine');
 const { createStateLock } = require('./mutex');
-const { loadConfig, loadGameData } = require('./validation');
+const { loadConfig, loadGameData, validateAllocation } = require('./validation');
 
 function buildCorsOriginChecker(corsOrigins) {
   if (corsOrigins.includes('*')) return (_origin, callback) => callback(null, true);
@@ -217,17 +217,6 @@ function createRealtimeGameServer(options = {}) {
       }, ack);
     });
 
-    socket.on('admin:end-round', async (_payload, ack) => {
-      await runAdminAction(socket, 'admin:end-round', async () => {
-        const results = engine.forceEndRound();
-        if (results) {
-          io.emit('round:results', results);
-          emitSnapshotsToPublic();
-        }
-        return { ended: true, results };
-      }, ack);
-    });
-
     socket.on('admin:reset-game', async (_payload, ack) => {
       await runAdminAction(socket, 'admin:reset-game', async () => {
         const snapshot = engine.resetGame();
@@ -236,9 +225,9 @@ function createRealtimeGameServer(options = {}) {
       }, ack);
     });
 
-    socket.on('admin:set-purse-value', async (payload = {}, ack) => {
-      await runAdminAction(socket, 'admin:set-purse-value', async () => {
-        const result = engine.setPurseValue(payload);
+    socket.on('admin:set-portfolio-value', async (payload = {}, ack) => {
+      await runAdminAction(socket, 'admin:set-portfolio-value', async () => {
+        const result = engine.setPortfolioValue(payload);
         emitSnapshotsToPublic();
         return result;
       }, ack);
@@ -250,7 +239,7 @@ function createRealtimeGameServer(options = {}) {
         ack, { useLock: false });
     });
 
-    // ── Team events (Purse/Investment system) ────────────────────────────────
+    // ── Team events ──────────────────────────────────────────────────────────
     socket.on('team:join', async (payload = {}, ack) => {
       const respond = typeof ack === 'function' ? ack : noop;
       try {
@@ -281,49 +270,22 @@ function createRealtimeGameServer(options = {}) {
       }
     });
 
-    // Invest amount from purse into a company
-    socket.on('team:invest', async (payload = {}, ack) => {
+    // CHANGED: team:submit now accepts { allocations: { reliance: 40, hdfc_bank: 20, ... } }
+    socket.on('team:submit', async (payload = {}, ack) => {
       const respond = typeof ack === 'function' ? ack : noop;
       try {
         assertServerAvailable();
-        const result = await withStateLock(async () =>
-          engine.invest({ socketId: socket.id, companyId: payload.companyId, amount: payload.amount })
-        );
-        socket.emit('investment:updated', { type: 'invest', ...result });
-        emitSnapshotToSocket(socket);
-        emitSnapshotsToAdmins();
-        respond(success(result));
-      } catch (error) {
-        respond(failure(error));
-      }
-    });
 
-    // Withdraw amount from company back to purse
-    socket.on('team:withdraw', async (payload = {}, ack) => {
-      const respond = typeof ack === 'function' ? ack : noop;
-      try {
-        assertServerAvailable();
-        const result = await withStateLock(async () =>
-          engine.withdraw({ socketId: socket.id, companyId: payload.companyId, amount: payload.amount })
-        );
-        socket.emit('investment:updated', { type: 'withdraw', ...result });
-        emitSnapshotToSocket(socket);
-        emitSnapshotsToAdmins();
-        respond(success(result));
-      } catch (error) {
-        respond(failure(error));
-      }
-    });
+        // Validate allocation first (outside lock so errors are fast)
+        const allocation = validateAllocation(payload.allocations);
 
-    // Submit current investments for the round (freeze them)
-    socket.on('team:submit', async (_payload = {}, ack) => {
-      const respond = typeof ack === 'function' ? ack : noop;
-      try {
-        assertServerAvailable();
-        const result = await withStateLock(async () => engine.submitInvestments({ socketId: socket.id }));
+        const result = await withStateLock(async () =>
+          engine.submitAllocation({ decision: allocation, allocation, socketId: socket.id })
+        );
+
         socket.emit('round:submission-status', {
           accepted: true,
-          investments: result.investments,
+          allocation: result.allocation,
           round: result.round,
           teamId: result.teamId,
         });

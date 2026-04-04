@@ -1,0 +1,476 @@
+[
+  {
+    "id": "round-1",
+    "year": 2012,
+    "yearRange": "2012",
+    "title": "India Rising",
+    "context": "UPA-2's policy paralysis grinds the economy, yet India's startup ecosystem quietly ignites. Mobile internet sits at 3% penetration. Foreign capital flows in despite corruption scandals. The seeds of a decade-long drama are being planted.",
+    "companies": [
+      {
+        "id": "reliance",
+        "name": "Reliance Industries",
+        "sector": "Conglomerate",
+        "headline": "RIL acquires spectrum — Mukesh bets on a 4G future",
+        "sentiment": "positive",
+        "detail": "RIL quietly files for spectrum licenses. Insiders whisper about a project to disrupt Indian telecom. Oil-to-chemicals remains the cash cow that funds the ambition.",
+        "credibility": 78
+      },
+      {
+        "id": "hdfc_bank",
+        "name": "HDFC Bank",
+        "sector": "Banking",
+        "headline": "HDFC Bank beats estimates — announces aggressive branch expansion",
+        "sentiment": "positive",
+        "detail": "PAT up 30% YoY. Tier-2/3 city expansion strategy gaining traction. NPA levels at industry-best 0.9%. Management quality unmatched in Indian banking.",
+        "credibility": 85
+      },
+      {
+        "id": "infosys",
+        "name": "Infosys",
+        "sector": "IT Services",
+        "headline": "Infosys cuts guidance — visa issues and leadership drift",
+        "sentiment": "negative",
+        "detail": "Revenue growth guidance cut to 8-10%. US visa headwinds. Founder Narayana Murthy quietly critical of direction. But a massive cash pile offers comfort.",
+        "credibility": 72
+      },
+      {
+        "id": "yes_bank",
+        "name": "Yes Bank",
+        "sector": "Banking",
+        "headline": "Yes Bank posts 35% profit growth — Rana Kapoor's machine hums",
+        "sentiment": "positive",
+        "detail": "Corporate loan book expanding at breakneck speed. Analysts bullish. Margins stellar. Some ask: is the loan quality too good to be true?",
+        "credibility": 65
+      },
+      {
+        "id": "byjus",
+        "name": "Byju's",
+        "sector": "EdTech",
+        "headline": "Think & Learn raises Series A — bets on online education",
+        "sentiment": "positive",
+        "detail": "Byju Raveendran's CAT coaching brand goes digital. Sequoia leads funding at $50M valuation. EdTech is completely uncharted territory in India.",
+        "credibility": 55
+      },
+      {
+        "id": "adani",
+        "name": "Adani Enterprises",
+        "sector": "Infrastructure",
+        "headline": "Adani wins Mundra port expansion — infrastructure empire grows",
+        "sentiment": "positive",
+        "detail": "Government infrastructure push directly benefits Adani. Coal imports rising. Power generation capacity additions announced. Political tailwinds are strong.",
+        "credibility": 70
+      }
+    ],
+    "yearlyReturn": {
+      "reliance": 0.12,
+      "hdfc_bank": 0.28,
+      "infosys": 0.10,
+      "yes_bank": 0.42,
+      "byjus": 0.75,
+      "adani": 0.16
+    },
+    "yearEndReveal": {
+      "reliance": "Reliance steady +12%. Telecom plan still secret but insiders are loading up.",
+      "hdfc_bank": "HDFC Bank +28%. The consistent compounder delivers again — boring is beautiful.",
+      "infosys": "Infosys +10%. Underperforms peers as internal drift continues.",
+      "yes_bank": "Yes Bank rockets +42%! The lending machine is printing money... for now.",
+      "byjus": "Byju's private valuation soars +75%. User base triples. EdTech momentum is undeniable.",
+      "adani": "Adani +16%. Steady gains on infrastructure expansion and government contracts."
+    }
+  },
+  {
+    "id": "round-2",
+    "year": 2015,
+    "yearRange": "2013–2015",
+    "title": "The Startup India Wave",
+    "context": "Modi's election brings unprecedented optimism. Startup India, Make in India, and Digital India launch simultaneously. VC money floods in. Jio's secret project is nearing launch. India's startup ecosystem is unrecognisable from three years ago.",
+    "companies": [
+      {
+        "id": "reliance",
+        "name": "Reliance Industries",
+        "sector": "Conglomerate",
+        "headline": "Jio beta testers report free data at blazing speeds — launch imminent",
+        "sentiment": "positive",
+        "detail": "If Jio launches publicly with free data, every telecom operator is in existential trouble. RIL shares are muted but savvy investors are positioning aggressively.",
+        "credibility": 80
+      },
+      {
+        "id": "hdfc_bank",
+        "name": "HDFC Bank",
+        "sector": "Banking",
+        "headline": "HDFC Bank wins 'Most Trusted Bank' for 7th consecutive year",
+        "sentiment": "positive",
+        "detail": "Digital transformation well underway. Mobile app transactions surge 200%. Management quality remains best-in-class. No surprises — which is exactly the point.",
+        "credibility": 88
+      },
+      {
+        "id": "infosys",
+        "name": "Infosys",
+        "sector": "IT Services",
+        "headline": "Narayana Murthy returns, triggers leadership shake-up",
+        "sentiment": "neutral",
+        "detail": "Founder's intervention creates short-term uncertainty. But talent pipeline strong and global demand for IT services is accelerating. Is this chaos or necessary reform?",
+        "credibility": 66
+      },
+      {
+        "id": "yes_bank",
+        "name": "Yes Bank",
+        "sector": "Banking",
+        "headline": "Yes Bank hits all-time high — but RBI sends first warning letter",
+        "sentiment": "positive",
+        "detail": "Profits up massively. NPA data still looks clean. But an RBI inspection flags irregularities. Management dismisses it publicly. Institutional investors are quietly watching.",
+        "credibility": 52
+      },
+      {
+        "id": "byjus",
+        "name": "Byju's",
+        "sector": "EdTech",
+        "headline": "Byju's raises $75M from Sequoia, DST — now valued at $500M",
+        "sentiment": "positive",
+        "detail": "10 million registered students. Mark Zuckerberg publicly praises Byju's. App downloads exploding. Loss-making but growth metrics are extraordinary. The story is just beginning.",
+        "credibility": 68
+      },
+      {
+        "id": "adani",
+        "name": "Adani Enterprises",
+        "sector": "Infrastructure",
+        "headline": "Adani wins bid for 6 airports — government accelerates privatisation",
+        "sentiment": "positive",
+        "detail": "Adani Group becomes the go-to infrastructure partner for the government. Coal, ports, power, now airports. Leverage rising sharply but so is scale.",
+        "credibility": 73
+      }
+    ],
+    "yearlyReturn": {
+      "reliance": 0.38,
+      "hdfc_bank": 0.55,
+      "infosys": 0.22,
+      "yes_bank": 0.68,
+      "byjus": 2.10,
+      "adani": 0.28
+    },
+    "yearEndReveal": {
+      "reliance": "Jio launches September 2016 with FREE calls and data. Every competitor in panic. RIL +38% over this period.",
+      "hdfc_bank": "HDFC Bank +55%. The blue-chip keeps compounding — patience is richly rewarded.",
+      "infosys": "Infosys restructures, +22%. Solid but nothing spectacular. The turnaround takes time.",
+      "yes_bank": "Yes Bank +68%! Stunning returns. But that RBI letter... the NPA iceberg is lurking.",
+      "byjus": "Byju's TRIPLES valuation! +210%. EdTech becomes India's hottest sector.",
+      "adani": "Adani +28%. Airport wins add a new chapter to the infrastructure empire."
+    }
+  },
+  {
+    "id": "round-3",
+    "year": 2018,
+    "yearRange": "2016–2018",
+    "title": "Disruption and Cracks",
+    "context": "Post-Jio India is unrecognisable. Data is effectively free. Digital payments surge after demonetisation. GST creates short-term pain. But cracks appear: the IL&FS crisis rattles NBFCs, global trade wars shadow markets, and some corporate facades begin to crumble.",
+    "companies": [
+      {
+        "id": "reliance",
+        "name": "Reliance Industries",
+        "sector": "Conglomerate",
+        "headline": "Jio hits 215M subscribers — competitors bleeding billions",
+        "sentiment": "positive",
+        "detail": "Airtel and Vodafone-Idea losing billions. Jio is the only winner in telecom. JioFiber launches for home broadband. Reliance Retail posts 100% YoY growth. A three-sector giant is emerging.",
+        "credibility": 88
+      },
+      {
+        "id": "hdfc_bank",
+        "name": "HDFC Bank",
+        "sector": "Banking",
+        "headline": "HDFC Bank in merger talks with parent HDFC Ltd",
+        "sentiment": "positive",
+        "detail": "A mega-merger would create one of Asia's largest financial institutions. Execution risk exists but strategic rationale is sound. Short-term disruption, long-term value creation.",
+        "credibility": 80
+      },
+      {
+        "id": "infosys",
+        "name": "Infosys",
+        "sector": "IT Services",
+        "headline": "CEO Vishal Sikka resigns amid boardroom feud — founder vs management",
+        "sentiment": "negative",
+        "detail": "Murthy's public war with management erupts. Client confidence wobbles briefly. But the order book remains massive. Is this a storm in a teacup or structural rot?",
+        "credibility": 58
+      },
+      {
+        "id": "yes_bank",
+        "name": "Yes Bank",
+        "sector": "Banking",
+        "headline": "RBI rejects Yes Bank's CEO extension — ALARM BELLS RINGING",
+        "sentiment": "negative",
+        "detail": "Rana Kapoor forced out. New CEO inherits a mess. NPAs now emerging officially. Shares falling sharply. Institutional investors quietly exiting. This could be very bad.",
+        "credibility": 30
+      },
+      {
+        "id": "byjus",
+        "name": "Byju's",
+        "sector": "EdTech",
+        "headline": "Byju's hits unicorn status — Tencent and Chan-Zuckerberg invest",
+        "sentiment": "positive",
+        "detail": "Valuation: $1 Billion. 20M students on platform. COVID hasn't happened yet but Byju's is already the undisputed EdTech leader. International expansion begins.",
+        "credibility": 72
+      },
+      {
+        "id": "adani",
+        "name": "Adani Enterprises",
+        "sector": "Infrastructure",
+        "headline": "Adani Power wins massive government tender — but debt mounts",
+        "sentiment": "positive",
+        "detail": "Solar and thermal capacity both expanding aggressively. Coal imports profitable. But group-level debt is rising at an alarming rate. Is the collateral solid?",
+        "credibility": 62
+      }
+    ],
+    "yearlyReturn": {
+      "reliance": 0.52,
+      "hdfc_bank": 0.35,
+      "infosys": -0.08,
+      "yes_bank": -0.55,
+      "byjus": 1.50,
+      "adani": 0.42
+    },
+    "yearEndReveal": {
+      "reliance": "Jio dominance confirmed. Reliance +52%. Mukesh Ambani is building India's digital infrastructure.",
+      "hdfc_bank": "HDFC Bank +35%. Merger talks add some uncertainty — but franchise quality shines.",
+      "infosys": "Infosys -8%. CEO drama weighs on the stock. The only IT major to lose money.",
+      "yes_bank": "YES BANK -55%! RBI rejection signals deeper rot. Those who saw it coming dodged disaster.",
+      "byjus": "Byju's private valuation +150%. The EdTech unicorn looks invincible. COVID is about to supercharge it.",
+      "adani": "Adani +42%. Infrastructure empire expanding rapidly. The debt question grows louder."
+    }
+  },
+  {
+    "id": "round-4",
+    "year": 2020,
+    "yearRange": "2019–2020",
+    "title": "COVID Chaos and Digital Explosion",
+    "context": "March 2020: Indian markets crash 40% in weeks. Then central banks print unprecedented money. Lockdowns make digital the only economy that works. EdTech and IT go parabolic. Banking braces for an NPA wave. Some companies will emerge from this unrecognisable — for better or worse.",
+    "companies": [
+      {
+        "id": "reliance",
+        "name": "Reliance Industries",
+        "sector": "Conglomerate",
+        "headline": "Facebook invests $5.7B in Jio — Google follows with $4.5B",
+        "sentiment": "positive",
+        "detail": "Rights issue raises ₹53,000 crore. Reliance becomes net-debt free. Jio positioned as India's digital infrastructure backbone. Retail arm becomes India's largest retailer.",
+        "credibility": 92
+      },
+      {
+        "id": "hdfc_bank",
+        "name": "HDFC Bank",
+        "sector": "Banking",
+        "headline": "HDFC Bank: digital transactions triple — but NPA outlook uncertain",
+        "sentiment": "neutral",
+        "detail": "COVID moratorium masks true NPA levels. Digital banking surges 300%. But real estate exposure and SME loans create anxiety. Dividend cut to conserve capital.",
+        "credibility": 74
+      },
+      {
+        "id": "infosys",
+        "name": "Infosys",
+        "sector": "IT Services",
+        "headline": "Infosys wins $1.5B ABN AMRO deal — WFH validates IT outsourcing",
+        "sentiment": "positive",
+        "detail": "Remote work proves IT outsourcing is more durable than sceptics believed. Large deal wins accelerating globally. Revenue guidance upgraded to 12-14% for FY21.",
+        "credibility": 85
+      },
+      {
+        "id": "yes_bank",
+        "name": "Yes Bank",
+        "sector": "Banking",
+        "headline": "YES BANK COLLAPSES — RBI takes control, deposits frozen at ₹50,000",
+        "sentiment": "negative",
+        "detail": "CATASTROPHIC. Rana Kapoor arrested. SBI forced to rescue. Shareholders completely wiped out. Stock at ₹3. A cautionary tale for the ages.",
+        "credibility": 12
+      },
+      {
+        "id": "byjus",
+        "name": "Byju's",
+        "sector": "EdTech",
+        "headline": "Schools close globally — Byju's adds 45 million users in 3 months",
+        "sentiment": "positive",
+        "detail": "COVID is Byju's growth hormone. Valuation hits $10.5 BILLION. BlackRock and Tiger Global invest. Annual revenue: ₹2,800 crore. The world has never seen EdTech demand like this.",
+        "credibility": 78
+      },
+      {
+        "id": "adani",
+        "name": "Adani Enterprises",
+        "sector": "Infrastructure",
+        "headline": "Adani Green wins world's largest solar tender — 8 GW",
+        "sentiment": "positive",
+        "detail": "Government's green energy push perfectly timed. Solar portfolio exploding. Adani group stocks doubling. Coal remains profitable despite ESG pressure.",
+        "credibility": 80
+      }
+    ],
+    "yearlyReturn": {
+      "reliance": 0.72,
+      "hdfc_bank": 0.08,
+      "infosys": 0.62,
+      "yes_bank": -0.90,
+      "byjus": 3.50,
+      "adani": 0.95
+    },
+    "yearEndReveal": {
+      "reliance": "Reliance +72%! Facebook + Google billion-dollar bets validate the Jio thesis spectacularly.",
+      "hdfc_bank": "HDFC Bank scrapes +8%. NPA fears keep a lid on a genuinely great franchise.",
+      "infosys": "Infosys +62%! WFH drives the biggest IT spending boom in a decade.",
+      "yes_bank": "YES BANK: -90%. Total destruction. RBI rescue saves depositors. Shareholders get nothing.",
+      "byjus": "Byju's: +350%! COVID makes this the hottest startup on earth. Valuation: $10.5 Billion.",
+      "adani": "Adani +95%! Green energy + government contracts fuel an extraordinary run."
+    }
+  },
+  {
+    "id": "round-5",
+    "year": 2022,
+    "yearRange": "2021–2022",
+    "title": "The Great IPO Frenzy and Rate Shock",
+    "context": "Markets are euphoric. Zomato IPO oversubscribed 38x. Paytm raises ₹18,000 crore. LIC's IPO is India's largest ever. But the Fed hikes rates aggressively. Tech stocks globally crash 50-70%. India holds up better than most — but startup winter is coming.",
+    "companies": [
+      {
+        "id": "reliance",
+        "name": "Reliance Industries",
+        "sector": "Conglomerate",
+        "headline": "Reliance Retail IPO imminent — $100B valuation expected",
+        "sentiment": "positive",
+        "detail": "India's most anticipated IPO. Jio IPO also in pipeline. Combined these subsidiaries could be worth $250B. RIL parent is the ultimate pre-IPO play.",
+        "credibility": 82
+      },
+      {
+        "id": "hdfc_bank",
+        "name": "HDFC Bank",
+        "sector": "Banking",
+        "headline": "HDFC-HDFC Bank merger finalised — integration challenges loom",
+        "sentiment": "neutral",
+        "detail": "The merger of the decade closes. But stock underperforms as integration costs bite. Priority sector lending requirements create short-term headwinds. Patience required.",
+        "credibility": 76
+      },
+      {
+        "id": "infosys",
+        "name": "Infosys",
+        "sector": "IT Services",
+        "headline": "Infosys posts record revenue — AI transition accelerating",
+        "sentiment": "positive",
+        "detail": "Revenue touches $16B. Buybacks boost EPS. Cloud and AI deals multiplying. Attrition at 27% is the main concern — retaining talent is expensive in this market.",
+        "credibility": 84
+      },
+      {
+        "id": "yes_bank",
+        "name": "Yes Bank",
+        "sector": "Banking",
+        "headline": "Yes Bank raises ₹8,900 crore in FPO — slow recovery begins",
+        "sentiment": "neutral",
+        "detail": "Prashant Kumar's turnaround is painfully slow. NPAs still elevated. Capital adequacy restored but profitability is distant. A speculative bet on redemption.",
+        "credibility": 40
+      },
+      {
+        "id": "byjus",
+        "name": "Byju's",
+        "sector": "EdTech",
+        "headline": "Byju's acquires Aakash, WhiteHat Jr, Toppr — but losses explode to ₹4,500 crore",
+        "sentiment": "negative",
+        "detail": "Valuation peaks at $22 Billion. But auditor flags concerns. Employees report unpaid salaries. Governance questions mount publicly. Is the emperor wearing clothes?",
+        "credibility": 28
+      },
+      {
+        "id": "adani",
+        "name": "Adani Enterprises",
+        "sector": "Infrastructure",
+        "headline": "Gautam Adani becomes world's 3rd richest person — stocks up 1000%",
+        "sentiment": "positive",
+        "detail": "Adani Total Gas +900%. Adani Green +700%. Adani Enterprises +400% in 24 months. Hindenburg Research is quietly loading their report...",
+        "credibility": 55
+      }
+    ],
+    "yearlyReturn": {
+      "reliance": 0.22,
+      "hdfc_bank": 0.05,
+      "infosys": 0.18,
+      "yes_bank": 0.15,
+      "byjus": -0.30,
+      "adani": 2.20
+    },
+    "yearEndReveal": {
+      "reliance": "Reliance +22%. Steady gains as IPO anticipation builds and retail dominance solidifies.",
+      "hdfc_bank": "HDFC Bank +5%. Merger integration is painful. Short-term pain for long-term gain.",
+      "infosys": "Infosys +18%. Steady compounder delivers even in turbulent times.",
+      "yes_bank": "Yes Bank +15%. Tiny recovery from the depths. Turnaround is real but very slow.",
+      "byjus": "Byju's -30%. Startup winter hits EdTech. Governance crisis begins surfacing publicly.",
+      "adani": "ADANI: +220%! Gautam Adani briefly becomes world's 3rd richest. But Hindenburg is loading..."
+    }
+  },
+  {
+    "id": "round-6",
+    "year": 2024,
+    "yearRange": "2023–2024",
+    "title": "The Great Reckoning",
+    "context": "January 2023: Hindenburg Research publishes a devastating 100-page report on Adani. ₹10 lakh crore of market cap evaporates in days. Byju's files for insolvency. EdTech winter arrives. Yet the Sensex crosses 80,000. Quality assets compound. Hubris gets punished. India's market is maturing.",
+    "companies": [
+      {
+        "id": "reliance",
+        "name": "Reliance Industries",
+        "sector": "Conglomerate",
+        "headline": "Jio files for IPO — $100B+ valuation; Mukesh hands reins to next generation",
+        "sentiment": "positive",
+        "detail": "The patriarch passes the baton. Jio IPO could be India's largest ever listing. Green energy investments gaining serious scale. The Reliance story continues into its next chapter.",
+        "credibility": 86
+      },
+      {
+        "id": "hdfc_bank",
+        "name": "HDFC Bank",
+        "sector": "Banking",
+        "headline": "HDFC Bank merger integration complete — growth reaccelerates",
+        "sentiment": "positive",
+        "detail": "Post-merger integration blues are behind. Loan growth accelerates to 15%+. Digital banking leadership intact. Premium valuation versus history remains justified.",
+        "credibility": 88
+      },
+      {
+        "id": "infosys",
+        "name": "Infosys",
+        "sector": "IT Services",
+        "headline": "Infosys AI-first strategy — wins $2B deal from global bank",
+        "sentiment": "positive",
+        "detail": "AI transformation is Infosys's next chapter. Deal pipeline at record levels. Dividend payout consistent. The boring compounder keeps compounding through every cycle.",
+        "credibility": 90
+      },
+      {
+        "id": "yes_bank",
+        "name": "Yes Bank",
+        "sector": "Banking",
+        "headline": "Yes Bank posts first profit in 4 years — stock still at ₹20",
+        "sentiment": "neutral",
+        "detail": "Operational turnaround finally visible under the numbers. But shareholder wealth destruction has been near total. Recovery will take many years. Patience and stomach required.",
+        "credibility": 48
+      },
+      {
+        "id": "byjus",
+        "name": "Byju's",
+        "sector": "EdTech",
+        "headline": "BYJU'S INSOLVENT — NCLT admits insolvency petition, offices seized",
+        "sentiment": "negative",
+        "detail": "India's most spectacular startup collapse. $22B valuation → ZERO. Employees unpaid for months. BCCI demands return of jersey money. Byju Raveendran accused of fund diversion. Complete wipeout.",
+        "credibility": 5
+      },
+      {
+        "id": "adani",
+        "name": "Adani Enterprises",
+        "sector": "Infrastructure",
+        "headline": "Adani -60% from peak after Hindenburg attack — partial recovery begins",
+        "sentiment": "negative",
+        "detail": "The Hindenburg report erases ₹10 lakh crore. Adani scrambles to repay loans. GQG Partners invests $1.9B, providing lifeline. Some recovery since, but the credibility damage lingers.",
+        "credibility": 45
+      }
+    ],
+    "yearlyReturn": {
+      "reliance": 0.18,
+      "hdfc_bank": 0.20,
+      "infosys": 0.28,
+      "yes_bank": -0.15,
+      "byjus": -0.95,
+      "adani": -0.35
+    },
+    "yearEndReveal": {
+      "reliance": "Reliance +18%. Jio IPO buzz + green energy keeps the giant compounding.",
+      "hdfc_bank": "HDFC Bank +20%. Integration complete. Quality franchise rewards patient investors.",
+      "infosys": "Infosys +28%. AI era benefits India's IT sector more than anyone expected.",
+      "yes_bank": "Yes Bank -15%. Operational recovery real but share price pain continues.",
+      "byjus": "BYJU'S: -95%. India's biggest startup collapse. $22 Billion to zero. The hubris tax paid in full.",
+      "adani": "Adani -35%. Hindenburg aftermath. Even partial recovery cannot undo the credibility damage."
+    }
+  }
+]

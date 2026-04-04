@@ -1,36 +1,40 @@
-const {
-  DECISION_IGNORE,
-  DECISION_TRADE,
-  SIGNAL_TYPE_ALPHA,
-  SIGNAL_TYPE_NOISE,
-} = require("./constants");
+/**
+ * Evaluates a team's investments against a round's actual returns.
+ *
+ * @param {object} roundData - The current round object from portfolio-game.json
+ * @param {object} investments - { reliance: 5000, hdfc_bank: 3000, ... } amounts invested
+ * @returns {{ returns: number, totalInvested: number, percentReturn: number, breakdown: object }}
+ */
+function evaluateInvestments(roundData, investments) {
+  const returns = roundData.yearlyReturn;
 
-function evaluateDecision(signal, submission) {
-  const decision = submission ? submission.decision : null;
+  let totalReturns = 0;
+  let totalInvested = 0;
+  const breakdown = {};
 
-  if (signal.type === SIGNAL_TYPE_ALPHA) {
-    if (decision === DECISION_TRADE) {
-      return { delta: signal.value, verdict: "correct-alpha" };
-    }
+  for (const companyId of Object.keys(returns)) {
+    const amount = investments[companyId] || 0;
+    const companyReturn = returns[companyId]; // e.g., 0.15 for 15%
 
-    return { delta: -100, verdict: decision === DECISION_IGNORE ? "missed-alpha" : "no-response-alpha" };
+    const companyReturns = Math.round(amount * companyReturn);
+    totalReturns += companyReturns;
+    totalInvested += amount;
+
+    breakdown[companyId] = {
+      invested: amount,
+      yearlyReturn: companyReturn,
+      returns: companyReturns,
+    };
   }
 
-  if (signal.type === SIGNAL_TYPE_NOISE) {
-    if (decision === DECISION_IGNORE) {
-      return { delta: 100, verdict: "correct-ignore" };
-    }
+  const percentReturn = totalInvested > 0 ? Math.round((totalReturns / totalInvested) * 10000) / 100 : 0;
 
-    if (decision === DECISION_TRADE) {
-      return { delta: -Math.round(signal.value * 0.65), verdict: "false-trade" };
-    }
-
-    return { delta: 0, verdict: "no-response-noise" };
-  }
-
-  return { delta: 0, verdict: "unknown" };
+  return {
+    returns: totalReturns,
+    totalInvested,
+    percentReturn,
+    breakdown,
+  };
 }
 
-module.exports = {
-  evaluateDecision,
-};
+module.exports = { evaluateInvestments };

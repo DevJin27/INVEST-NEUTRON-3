@@ -1,4 +1,4 @@
-import type { GameSnapshot, Investments, RoundResults, CompanyId } from './types'
+import type { Allocation, CompanyId, GameSnapshot, RoundResults } from './types'
 import { COMPANY_IDS } from './types'
 
 export function isPlayableSnapshot(snapshot: GameSnapshot | null): boolean {
@@ -54,36 +54,28 @@ export function sentimentLabel(sentiment: 'positive' | 'negative' | 'neutral'): 
   return '◆ Mixed'
 }
 
-/** Build empty investments object */
-export function blankInvestments(): Investments {
-  return Object.fromEntries(COMPANY_IDS.map((id) => [id, 0])) as Investments
+/** Build a blank allocation with all zeros */
+export function blankAllocation(): Allocation {
+  return Object.fromEntries(COMPANY_IDS.map((id) => [id, 0])) as Allocation
 }
 
-/** Calculate total amount invested */
-export function totalInvested(investments: Investments): number {
-  return COMPANY_IDS.reduce((sum, id) => sum + (investments[id] ?? 0), 0)
+/** Build an equal-weight allocation (100 / n per company) */
+export function equalAllocation(): Allocation {
+  const perCompany = Math.floor(100 / COMPANY_IDS.length)
+  const alloc = Object.fromEntries(COMPANY_IDS.map((id) => [id, perCompany])) as Allocation
+  const remainder = 100 - perCompany * COMPANY_IDS.length
+  if (remainder > 0) alloc[COMPANY_IDS[0]] += remainder
+  return alloc
 }
 
-/** Check if team has any investments */
-export function hasInvestments(investments: Investments): boolean {
-  return totalInvested(investments) > 0
+/** Total of all allocation values */
+export function allocationTotal(alloc: Allocation): number {
+  return COMPANY_IDS.reduce((sum, id) => sum + (alloc[id] ?? 0), 0)
 }
 
-/** Get investment percentage for a company (for display) */
-export function getInvestmentPercentage(investments: Investments, companyId: CompanyId, total: number): number {
-  if (total <= 0) return 0
-  return Math.round(((investments[companyId] ?? 0) / total) * 100)
-}
-
-/** Get quick invest amounts based on purse size */
-export function getQuickInvestAmounts(purse: number): number[] {
-  if (purse <= 0) return []
-  // Return: 10%, 25%, 50% of purse, min 1000
-  return [
-    Math.max(1000, Math.floor(purse * 0.1)),
-    Math.max(1000, Math.floor(purse * 0.25)),
-    Math.max(1000, Math.floor(purse * 0.5)),
-  ].filter((a) => a <= purse && a > 0)
+/** Returns true when allocation sums to 100 */
+export function isAllocationValid(alloc: Allocation): boolean {
+  return Math.abs(allocationTotal(alloc) - 100) <= 1
 }
 
 /** Get best and worst performers from round results */

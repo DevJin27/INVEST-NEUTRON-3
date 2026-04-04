@@ -1,12 +1,11 @@
 const {
-  COMPANY_IDS,
   GAME_PHASES,
   GRACE_WINDOW_MS,
-  STARTING_PURSE_VALUE,
+  STARTING_PORTFOLIO_VALUE,
   TEAM_LIMIT,
 } = require('./constants');
 const { createError } = require('./errors');
-const { evaluateInvestments } = require('./scoring');
+const { evaluatePortfolio } = require('./scoring');
 
 class GameEngine {
   constructor(options) {
@@ -19,12 +18,12 @@ class GameEngine {
     this.cancel = options.cancel || clearTimeout;
     this.onRoundClosed = options.onRoundClosed || null;
 
-    this.teams = new Map(); // teamId -> { teamId, name, purse, investments, totalValue, connected, socketId }
+    this.teams = new Map();
     this.socketToTeam = new Map();
-    this.submissions = new Map(); // teamId -> { investments: {...}, submittedAt } - freeze investments at round end
+    this.submissions = new Map(); // teamId → { allocation: {...}, submittedAt }
     this.roundTimer = null;
     this.phase = GAME_PHASES.IDLE;
-    this.round = 0;
+    this.round = 0; // 1-indexed when live
     this.currentRoundData = null;
     this.endsAt = null;
     this.closeAt = null;
@@ -67,24 +66,21 @@ class GameEngine {
       .map((team) => ({
         teamId: team.teamId,
         name: team.name,
-        purse: team.purse,
-        investments: { ...team.investments },
-        totalValue: team.totalValue,
+        portfolioValue: team.portfolioValue,
         connected: team.connected,
       }))
       .sort((a, b) => {
-        if (b.totalValue !== a.totalValue) return b.totalValue - a.totalValue;
+        if (b.portfolioValue !== a.portfolioValue) return b.portfolioValue - a.portfolioValue;
         return a.name.localeCompare(b.name);
       });
   }
 
   getTeamSubmission(teamId) {
     const submission = teamId ? this.submissions.get(teamId) : null;
-    const team = teamId ? this.teams.get(teamId) : null;
     return {
       teamId: teamId || null,
       hasSubmitted: Boolean(submission),
-      investments: submission ? submission.investments : (team ? team.investments : {}),
+      allocation: submission ? submission.allocation : null,
       canSubmit:
         Boolean(teamId) &&
         this.phase === GAME_PHASES.LIVE &&
@@ -97,11 +93,10 @@ class GameEngine {
     return this.getLeaderboard().map((team) => ({
       teamId: team.teamId,
       name: team.name,
-      purse: team.purse,
-      totalValue: team.totalValue,
+      portfolioValue: team.portfolioValue,
       connected: team.connected,
       hasSubmitted: this.submissions.has(team.teamId),
-      totalInvested: Object.values(team.investments).reduce((sum, val) => sum + val, 0),
+      allocation: this.submissions.get(team.teamId)?.allocation || null,
     }));
   }
 
@@ -177,17 +172,10 @@ class GameEngine {
     const replacedSocketId = existingTeam && existingTeam.socketId !== socketId ? existingTeam.socketId : null;
     if (replacedSocketId) this.socketToTeam.delete(replacedSocketId);
 
-    // Initialize with empty investments for new teams
-    const investments = existingTeam?.investments || Object.fromEntries(COMPANY_IDS.map(id => [id, 0]));
-    const purse = existingTeam?.purse ?? STARTING_PURSE_VALUE;
-    const totalInvested = Object.values(investments).reduce((sum, val) => sum + val, 0);
-
     this.teams.set(normalizedTeamId, {
       teamId: normalizedTeamId,
       name: normalizedName,
-      purse,
-      investments,
-      totalValue: purse + totalInvested,
+      portfolioValue: existingTeam?.portfolioValue ?? STARTING_PORTFOLIO_VALUE,
       connected: true,
       socketId,
     });
@@ -219,13 +207,7 @@ class GameEngine {
     this.remainingMs = 0;
 
     for (const [teamId, team] of this.teams.entries()) {
-      const investments = Object.fromEntries(COMPANY_IDS.map(id => [id, 0]));
-      this.teams.set(teamId, {
-        ...team,
-        purse: STARTING_PURSE_VALUE,
-        investments,
-        totalValue: STARTING_PURSE_VALUE,
-      });
+      this.teams.set(teamId, { ...team, portfolioValue: STARTING_PORTFOLIO_VALUE });
     }
 
     return this.beginRound();
@@ -279,7 +261,7 @@ class GameEngine {
     return { endsAt: this.endsAt, remainingMs: this.remainingMs, round: this.round };
   }
 
-  setPurseValue({ teamId, value }) {
+  setPortfolioValue({ teamId, value }) {
     if (this.isRoundInProgress()) {
       throw createError('INVALID_PHASE', { phase: this.phase, reason: 'Overrides disabled during live rounds.' });
     }
@@ -288,15 +270,10 @@ class GameEngine {
       throw createError('INVALID_TEAM', { teamId: normalizedTeamId });
     }
     if (!Number.isFinite(value) || value < 0) {
-      throw createError('INVALID_CONFIG', { reason: 'Purse value must be a non-negative number.' });
+      throw createError('INVALID_CONFIG', { reason: 'Portfolio value must be a non-negative number.' });
     }
     const team = this.teams.get(normalizedTeamId);
-    const totalInvested = Object.values(team.investments).reduce((sum, val) => sum + val, 0);
-    this.teams.set(normalizedTeamId, {
-      ...team,
-      purse: Math.round(value),
-      totalValue: Math.round(value) + totalInvested,
-    });
+    this.teams.set(normalizedTeamId, { ...team, portfolioValue: Math.round(value) });
     return { leaderboard: this.getLeaderboard(), team: this.teams.get(normalizedTeamId) };
   }
 
@@ -311,95 +288,12 @@ class GameEngine {
     this.closeAt = null;
     this.remainingMs = 0;
     for (const [teamId, team] of this.teams.entries()) {
-      const investments = Object.fromEntries(COMPANY_IDS.map(id => [id, 0]));
-      this.teams.set(teamId, {
-        ...team,
-        purse: STARTING_PURSE_VALUE,
-        investments,
-        totalValue: STARTING_PURSE_VALUE,
-      });
+      this.teams.set(teamId, { ...team, portfolioValue: STARTING_PORTFOLIO_VALUE });
     }
     return this.getBaseSnapshot();
   }
 
-  // Invest amount from purse into a company
-  invest({ socketId, companyId, amount }) {
-    this.assertAcceptingSubmissions();
-
-    const teamId = this.socketToTeam.get(socketId);
-    if (!teamId) throw createError('INVALID_TEAM', { reason: 'Socket not associated with an active team.' });
-
-    const team = this.teams.get(teamId);
-    if (!team || team.socketId !== socketId) throw createError('FORBIDDEN', { reason: 'Socket is not the active controller.' });
-
-    if (!COMPANY_IDS.includes(companyId)) {
-      throw createError('INVALID_COMPANY', { companyId, reason: 'Invalid company ID.' });
-    }
-
-    const investAmount = Math.max(0, Math.round(Number(amount) || 0));
-    if (investAmount <= 0) {
-      throw createError('INVALID_AMOUNT', { reason: 'Investment amount must be positive.' });
-    }
-
-    if (investAmount > team.purse) {
-      throw createError('INSUFFICIENT_FUNDS', { purse: team.purse, requested: investAmount });
-    }
-
-    // Update investments and purse
-    const newInvestments = { ...team.investments, [companyId]: (team.investments[companyId] || 0) + investAmount };
-    const totalInvested = Object.values(newInvestments).reduce((sum, val) => sum + val, 0);
-
-    this.teams.set(teamId, {
-      ...team,
-      purse: team.purse - investAmount,
-      investments: newInvestments,
-      totalValue: team.purse - investAmount + totalInvested,
-    });
-
-    return { teamId, companyId, amount: investAmount, purse: team.purse - investAmount, invested: newInvestments[companyId] };
-  }
-
-  // Withdraw amount from company back to purse
-  withdraw({ socketId, companyId, amount }) {
-    this.assertAcceptingSubmissions();
-
-    const teamId = this.socketToTeam.get(socketId);
-    if (!teamId) throw createError('INVALID_TEAM', { reason: 'Socket not associated with an active team.' });
-
-    const team = this.teams.get(teamId);
-    if (!team || team.socketId !== socketId) throw createError('FORBIDDEN', { reason: 'Socket is not the active controller.' });
-
-    if (!COMPANY_IDS.includes(companyId)) {
-      throw createError('INVALID_COMPANY', { companyId, reason: 'Invalid company ID.' });
-    }
-
-    const currentInvestment = team.investments[companyId] || 0;
-    const withdrawAmount = Math.max(0, Math.round(Number(amount) || 0));
-
-    if (withdrawAmount <= 0) {
-      throw createError('INVALID_AMOUNT', { reason: 'Withdrawal amount must be positive.' });
-    }
-
-    if (withdrawAmount > currentInvestment) {
-      throw createError('INSUFFICIENT_INVESTMENT', { companyId, invested: currentInvestment, requested: withdrawAmount });
-    }
-
-    // Update investments and purse
-    const newInvestments = { ...team.investments, [companyId]: currentInvestment - withdrawAmount };
-    const totalInvested = Object.values(newInvestments).reduce((sum, val) => sum + val, 0);
-
-    this.teams.set(teamId, {
-      ...team,
-      purse: team.purse + withdrawAmount,
-      investments: newInvestments,
-      totalValue: team.purse + withdrawAmount + totalInvested,
-    });
-
-    return { teamId, companyId, amount: withdrawAmount, purse: team.purse + withdrawAmount, invested: newInvestments[companyId] };
-  }
-
-  // Submit current investments for the round (freeze them)
-  submitInvestments({ socketId }) {
+  submitAllocation({ socketId, allocation }) {
     this.assertAcceptingSubmissions();
 
     const teamId = this.socketToTeam.get(socketId);
@@ -410,18 +304,9 @@ class GameEngine {
 
     if (this.submissions.has(teamId)) throw createError('ALREADY_SUBMITTED', { teamId, round: this.round });
 
-    // Freeze current investments as the submission
-    this.submissions.set(teamId, { investments: { ...team.investments }, submittedAt: this.now(), socketId });
+    this.submissions.set(teamId, { allocation, submittedAt: this.now(), socketId });
 
-    return { teamId, round: this.round, investments: team.investments };
-  }
-
-  // Admin can force end a round early
-  forceEndRound() {
-    if (this.phase !== GAME_PHASES.LIVE) {
-      throw createError('INVALID_PHASE', { phase: this.phase, reason: 'Can only end round during live phase.' });
-    }
-    return this.evaluateRoundIfNeeded();
+    return { teamId, round: this.round, allocation };
   }
 
   evaluateRoundIfNeeded() {
@@ -432,36 +317,24 @@ class GameEngine {
     const teamOutcomes = this.getLeaderboard().map((entry) => {
       const submission = this.submissions.get(entry.teamId) || null;
       const team = this.teams.get(entry.teamId);
+      const result = evaluatePortfolio(roundData, submission?.allocation ?? null, team.portfolioValue);
 
-      // Calculate returns on submitted investments (or current investments if no submission)
-      const investmentsToEvaluate = submission ? submission.investments : team.investments;
-      const result = evaluateInvestments(roundData, investmentsToEvaluate);
-
-      // Returns go back to purse
-      const newPurse = team.purse + result.returns;
-      const totalInvested = Object.values(team.investments).reduce((sum, val) => sum + val, 0);
-
-      this.teams.set(entry.teamId, {
-        ...team,
-        purse: Math.round(newPurse),
-        totalValue: Math.round(newPurse) + totalInvested,
-      });
+      this.teams.set(entry.teamId, { ...team, portfolioValue: result.newValue });
 
       return {
         teamId: entry.teamId,
         name: entry.name,
         connected: team.connected,
-        investments: investmentsToEvaluate,
-        totalInvested: result.totalInvested,
-        didSubmit: submission !== null,
-        returns: result.returns,
+        allocation: submission?.allocation || null,
+        didSubmit: result.didSubmit,
+        delta: result.delta,
         percentReturn: result.percentReturn,
-        purse: Math.round(newPurse),
-        totalValue: Math.round(newPurse) + totalInvested,
+        portfolioValue: result.newValue,
         breakdown: result.breakdown,
       };
     });
 
+    // Include the actual returns and reveals now that round is over
     const results = {
       round: this.round,
       year: roundData.year,

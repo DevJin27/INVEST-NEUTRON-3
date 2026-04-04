@@ -4,8 +4,7 @@ export type CompanyId = 'reliance' | 'hdfc_bank' | 'infosys' | 'yes_bank' | 'byj
 
 export const COMPANY_IDS: CompanyId[] = ['reliance', 'hdfc_bank', 'infosys', 'yes_bank', 'byjus', 'adani']
 
-// Investments are now amounts (in rupees), not percentages
-export type Investments = Record<CompanyId, number>
+export type Allocation = Record<CompanyId, number> // percentages summing to 100
 
 export interface TeamCredentials {
   teamId: string
@@ -34,16 +33,14 @@ export interface RoundData {
 export interface LeaderboardEntry {
   teamId: string
   name: string
-  purse: number
-  investments: Investments
-  totalValue: number
+  portfolioValue: number
   connected: boolean
 }
 
 export interface ViewerSubmission {
   teamId: string | null
   hasSubmitted: boolean
-  investments: Investments
+  allocation: Allocation | null
   canSubmit: boolean
 }
 
@@ -59,21 +56,6 @@ export interface GameSnapshot {
   viewerSubmission: ViewerSubmission
 }
 
-export interface TeamStatus {
-  teamId: string
-  name: string
-  purse: number
-  totalValue: number
-  connected: boolean
-  hasSubmitted: boolean
-  totalInvested: number
-}
-
-export interface AdminSnapshot extends Omit<GameSnapshot, 'viewerSubmission'> {
-  auditLog: unknown[]
-  teamSubmissions: TeamStatus[]
-}
-
 export interface SerializedError {
   code: string
   message: string
@@ -82,19 +64,10 @@ export interface SerializedError {
 
 export interface SubmissionStatus {
   accepted: boolean
-  investments?: Investments
+  allocation?: Allocation
   round?: number
   teamId?: string
   error?: SerializedError
-}
-
-export interface InvestmentUpdate {
-  type: 'invest' | 'withdraw'
-  teamId: string
-  companyId: CompanyId
-  amount: number
-  purse: number
-  invested: number
 }
 
 export interface AckSuccess<T> {
@@ -119,25 +92,21 @@ export interface SocketLike {
   disconnect(): this
 }
 
-// Company result after round ends
+// Round results broadcast after round closes
 export interface CompanyResult {
   yearlyReturn: number
   yearEndReveal: string
 }
 
-// Team outcome after round evaluation
 export interface TeamOutcome {
   teamId: string
   name: string
   connected: boolean
-  investments: Investments
-  totalInvested: number
+  allocation: Allocation | null
   didSubmit: boolean
-  returns: number
+  delta: number
   percentReturn: number
-  purse: number
-  totalValue: number
-  breakdown: Record<CompanyId, { invested: number; yearlyReturn: number; returns: number }>
+  portfolioValue: number
 }
 
 export interface RoundResults {
