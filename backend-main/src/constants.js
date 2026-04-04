@@ -1,7 +1,6 @@
-const TEAM_LIMIT = 10;
+const TEAM_LIMIT = 12;
 const TOTAL_ROUNDS = 6;
 const COMPANY_IDS = ['reliance', 'hdfc_bank', 'infosys', 'yes_bank', 'byjus', 'adani'];
-const STARTING_PORTFOLIO_VALUE = 10000;
 const STARTING_PURSE_VALUE = 100000; // ₹1,00,000 starting cash in purse
 const DEFAULT_PORT = 3000;
 const DEFAULT_ROUND_DURATION_MS = 60000; // 60 seconds for investment decisions
@@ -27,7 +26,6 @@ module.exports = {
   GAME_PHASES,
   GRACE_WINDOW_MS,
   MAX_ROUND_DURATION_MS,
-  STARTING_PORTFOLIO_VALUE,
   STARTING_PURSE_VALUE,
   TEAM_LIMIT,
   TOTAL_ROUNDS,

@@ -2,7 +2,7 @@ const request = require("supertest");
 const { io: createClient } = require("socket.io-client");
 
 const { createRealtimeGameServer } = require("../src/server");
-const defaultDeck = require("../src/data/signals.json");
+const defaultRounds = require("../src/data/portfolio-game.json");
 
 function createSilentLogger() {
   return {
@@ -15,16 +15,15 @@ function createSilentLogger() {
 
 async function createTestServer(envOverrides = {}) {
   const realtimeServer = createRealtimeGameServer({
-    deck: defaultDeck,
     env: {
       ADMIN_SECRET: "top-secret",
       CORS_ORIGINS: "*",
       PORT: "0",
       ROUND_DURATION_MS: "120",
-      TOTAL_ROUNDS: "3",
       ...envOverrides,
     },
     logger: createSilentLogger(),
+    rounds: defaultRounds,
   });
 
   await realtimeServer.start();

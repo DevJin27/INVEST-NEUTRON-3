@@ -1,10 +1,13 @@
-import { type FormEvent, useEffect, useRef, useState, useCallback } from 'react'
+import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from 'react'
 import './App.css'
+import AdminApp from './AdminApp'
 import { createSocketClient } from './socket-client'
 import type {
   AckResponse,
   CompanyId,
+  CompanySignal,
   ConnectionState,
+  CountdownState,
   GameSnapshot,
   RoundResults,
   SerializedError,
@@ -16,29 +19,35 @@ import type {
 import { COMPANY_IDS } from './types'
 import {
   blankInvestments,
+  formatCompactCurrency,
   formatCountdown,
   formatCurrency,
+  formatPhaseLabel,
   formatReturn,
+  formatReturnMultiplier,
   getCountdownMs,
+  getInvestmentPercentage,
+  getQuickInvestAmounts,
+  getRoundSummary,
   hasInvestments,
-  isPlayableSnapshot,
   sentimentColor,
   sentimentLabel,
   totalInvested,
 } from './utils'
 
-const COMPANY_META: Record<CompanyId, { emoji: string; color: string; fullName: string }> = {
-  reliance:  { emoji: '🏭', color: '#3b82f6', fullName: 'Reliance Industries' },
-  hdfc_bank: { emoji: '🏦', color: '#10b981', fullName: 'HDFC Bank' },
-  infosys:   { emoji: '💻', color: '#6366f1', fullName: 'Infosys' },
-  yes_bank:  { emoji: '🏧', color: '#f59e0b', fullName: 'Yes Bank' },
-  byjus:     { emoji: '📚', color: '#ec4899', fullName: 'BYJU\'S' },
-  adani:     { emoji: '⚡', color: '#8b5cf6', fullName: 'Adani Group' },
-}
+type SocketFactory = () => SocketLike
+type ShellMode = 'team' | 'host'
 
 const STARTING_PURSE = 100000
 
-type SocketFactory = () => SocketLike
+const COMPANY_META: Record<CompanyId, { emoji: string; accent: string }> = {
+  reliance: { emoji: '🏭', accent: '#7eb7ff' },
+  hdfc_bank: { emoji: '🏦', accent: '#7ad4b3' },
+  infosys: { emoji: '💻', accent: '#a8b7ff' },
+  yes_bank: { emoji: '🏧', accent: '#ffd47e' },
+  byjus: { emoji: '📚', accent: '#f4a3b8' },
+  adani: { emoji: '⚡', accent: '#ffb07e' },
+}
 
 const EMPTY_SUBMISSION: ViewerSubmission = {
   teamId: null,
@@ -47,269 +56,291 @@ const EMPTY_SUBMISSION: ViewerSubmission = {
   canSubmit: false,
 }
 
-function useCountdown(snapshot: GameSnapshot | null): number {
+function getModeFromHash(hash: string): ShellMode {
+  return hash === '#/host' ? 'host' : 'team'
+}
+
+function syncModeHash(mode: ShellMode) {
+  const nextHash = mode === 'host' ? '/host' : '/team'
+  if (window.location.hash !== `#${nextHash}`) {
+    window.location.hash = nextHash
+  }
+}
+
+function useCountdown(snapshot: CountdownState | null): number {
   const [, setTick] = useState(0)
+
   useEffect(() => {
-    if (!snapshot || snapshot.phase !== 'live' || snapshot.endsAt === null) return undefined
-    const id = window.setInterval(() => setTick((t) => t + 1), 100)
-    return () => window.clearInterval(id)
-  }, [snapshot])
+    if (!snapshot || snapshot.phase !== 'live' || snapshot.endsAt === null) {
+      return undefined
+    }
+
+    const timerId = window.setInterval(() => {
+      setTick((current) => current + 1)
+    }, 100)
+
+    return () => {
+      window.clearInterval(timerId)
+    }
+  }, [snapshot?.phase, snapshot?.endsAt])
+
   return getCountdownMs(snapshot)
 }
 
-interface InvestmentCardProps {
-  companyId: CompanyId
-  signal: { name: string; sector: string; headline: string; sentiment: 'positive' | 'negative' | 'neutral'; detail: string; credibility: number } | undefined
-  invested: number
-  purse: number
-  onInvest: (companyId: CompanyId, amount: number) => void
-  onWithdraw: (companyId: CompanyId, amount: number) => void
-  disabled: boolean
-  isSubmitted: boolean
+function buildConnectionLabel(connectionState: ConnectionState, phase?: GameSnapshot['phase']) {
+  if (connectionState === 'reconnecting') return 'Reconnecting'
+  if (connectionState === 'connecting' || connectionState === 'joining') return 'Connecting'
+  if (phase === 'paused') return 'Round paused'
+  if (phase === 'live') return 'Live round'
+  if (phase === 'results') return 'Results ready'
+  if (phase === 'finished') return 'Game complete'
+  return 'Standing by'
 }
 
-function InvestmentCard({ companyId, signal, invested, purse, onInvest, onWithdraw, disabled, isSubmitted }: InvestmentCardProps) {
+function InvestmentCard({
+  companyId,
+  signal,
+  invested,
+  purse,
+  disabled,
+  isSubmitted,
+  onInvest,
+  onWithdraw,
+}: {
+  companyId: CompanyId
+  signal: CompanySignal | undefined
+  invested: number
+  purse: number
+  disabled: boolean
+  isSubmitted: boolean
+  onInvest: (companyId: CompanyId, amount: number) => void
+  onWithdraw: (companyId: CompanyId, amount: number) => void
+}) {
   const meta = COMPANY_META[companyId]
   const [customAmount, setCustomAmount] = useState('')
 
   if (!signal) return null
 
-  const handleCustomInvest = () => {
-    const amount = parseInt(customAmount, 10)
+  const quickAmounts = getQuickInvestAmounts(purse)
+  const investmentPercent = getInvestmentPercentage(
+    {
+      ...blankInvestments(),
+      [companyId]: invested,
+    },
+    companyId,
+    invested,
+  )
+
+  function handleCustomInvest() {
+    const amount = Number.parseInt(customAmount, 10)
     if (amount > 0 && amount <= purse) {
       onInvest(companyId, amount)
       setCustomAmount('')
     }
   }
 
-  const handleWithdrawAll = () => {
-    if (invested > 0) {
-      onWithdraw(companyId, invested)
-    }
-  }
-
-  const quickAmounts = purse > 0 ? [
-    Math.max(1000, Math.floor(purse * 0.1)),
-    Math.max(1000, Math.floor(purse * 0.25)),
-    Math.max(1000, Math.floor(purse * 0.5)),
-  ].filter((a) => a <= purse && a > 0) : []
-
   return (
-    <div className="investment-card" style={{ borderLeftColor: meta.color }}>
-      <div className="company-header">
-        <div className="company-identity">
+    <article className="opportunity-card surface-panel" style={{ '--accent-inline': meta.accent } as CSSProperties}>
+      <div className="opportunity-head">
+        <div className="company-badge">
           <span className="company-emoji">{meta.emoji}</span>
-          <div className="company-names">
-            <span className="company-name">{signal.name}</span>
-            <span className="company-sector">{signal.sector}</span>
+          <div>
+            <h3>{signal.name}</h3>
+            <p>{signal.sector}</p>
           </div>
         </div>
-        <div className="sentiment-badge" style={{ color: sentimentColor(signal.sentiment), background: `${sentimentColor(signal.sentiment)}15` }}>
+        <span className="sentiment-pill" style={{ color: sentimentColor(signal.sentiment) }}>
           {sentimentLabel(signal.sentiment)}
+        </span>
+      </div>
+
+      <div className="opportunity-story">
+        <p className="headline">{signal.headline}</p>
+        <p className="detail">{signal.detail}</p>
+      </div>
+
+      <div className="signal-meta-row">
+        <div className="signal-metric">
+          <span>Credibility</span>
+          <strong>{signal.credibility}%</strong>
+        </div>
+        <div className="signal-metric">
+          <span>Locked</span>
+          <strong>{investmentPercent}%</strong>
         </div>
       </div>
 
-      <div className="signal-content">
-        <p className="signal-headline">{signal.headline}</p>
-        <p className="signal-detail">{signal.detail}</p>
+      <div className="credibility-track" role="progressbar" aria-valuenow={signal.credibility} aria-valuemin={0} aria-valuemax={100}>
+        <div className="credibility-fill" style={{ width: `${signal.credibility}%`, background: meta.accent }} />
       </div>
 
-      <div className="credibility-bar">
-        <span className="credibility-label">Signal credibility</span>
-        <div className="credibility-track">
-          <div className="credibility-fill" style={{ width: `${signal.credibility}%`, background: meta.color }} />
+      <div className="investment-footer">
+        <div>
+          <span className="mini-label">Current allocation</span>
+          <strong className="money-value">{formatCurrency(invested)}</strong>
         </div>
-        <span className="credibility-value">{signal.credibility}%</span>
+        {invested > 0 ? (
+          <button className="ghost-button" type="button" disabled={disabled} onClick={() => onWithdraw(companyId, invested)}>
+            Withdraw all
+          </button>
+        ) : null}
       </div>
 
-      <div className="investment-section">
-        <div className="current-investment">
-          <span className="investment-label">Your Investment</span>
-          <span className="investment-amount" style={{ color: invested > 0 ? meta.color : '#94a3b8' }}>
-            {formatCurrency(invested)}
-          </span>
-        </div>
-
-        {!isSubmitted && !disabled && (
-          <div className="investment-actions">
-            {invested > 0 && (
-              <button className="withdraw-btn" onClick={handleWithdrawAll} disabled={disabled}>
-                Withdraw All
+      {!isSubmitted ? (
+        <div className="action-stack">
+          <div className="quick-grid">
+            {quickAmounts.map((amount) => (
+              <button
+                key={amount}
+                className="quiet-button"
+                type="button"
+                disabled={disabled || amount > purse}
+                onClick={() => onInvest(companyId, amount)}
+              >
+                +{formatCompactCurrency(amount)}
               </button>
-            )}
-
-            {purse > 0 && (
-              <div className="invest-controls">
-                <div className="quick-amounts">
-                  {quickAmounts.map((amount, idx) => (
-                    <button
-                      key={idx}
-                      className="quick-invest-btn"
-                      onClick={() => onInvest(companyId, amount)}
-                      disabled={amount > purse || disabled}
-                    >
-                      +{formatCurrency(amount)}
-                    </button>
-                  ))}
-                </div>
-                <div className="custom-invest">
-                  <input
-                    type="number"
-                    placeholder="Custom amount"
-                    value={customAmount}
-                    onChange={(e) => setCustomAmount(e.target.value)}
-                    min="1"
-                    max={purse}
-                    disabled={disabled}
-                  />
-                  <button
-                    className="invest-btn"
-                    onClick={handleCustomInvest}
-                    disabled={!customAmount || parseInt(customAmount) > purse || parseInt(customAmount) <= 0 || disabled}
-                  >
-                    Invest
-                  </button>
-                </div>
-              </div>
-            )}
+            ))}
           </div>
-        )}
 
-        {isSubmitted && invested > 0 && (
-          <div className="submitted-badge">✓ Locked for this round</div>
-        )}
-      </div>
-    </div>
+          <div className="custom-row">
+            <input
+              aria-label={`${signal.name} investment amount`}
+              type="number"
+              min="1"
+              max={purse}
+              placeholder="Custom amount"
+              value={customAmount}
+              disabled={disabled}
+              onChange={(event) => setCustomAmount(event.target.value)}
+            />
+            <button
+              className="primary-inline-button"
+              type="button"
+              disabled={disabled || !customAmount || Number(customAmount) <= 0 || Number(customAmount) > purse}
+              onClick={handleCustomInvest}
+            >
+              Invest
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="locked-banner">Locked for scoring</div>
+      )}
+    </article>
   )
 }
 
-interface RoundResultsOverlayProps {
-  results: RoundResults
+function RoundResultsOverlay({
+  myTeamId,
+  onDismiss,
+  results,
+}: {
   myTeamId: string | null
   onDismiss: () => void
-}
-
-function RoundResultsOverlay({ results, myTeamId, onDismiss }: RoundResultsOverlayProps) {
-  const myOutcome = results.teamOutcomes.find((o) => o.teamId === myTeamId)
-
-  let best: CompanyId | null = null
-  let worst: CompanyId | null = null
-  let bestReturn = -Infinity
-  let worstReturn = Infinity
-
-  for (const id of COMPANY_IDS) {
-    const r = results.actualReturns[id]
-    if (r > bestReturn) { bestReturn = r; best = id }
-    if (r < worstReturn) { worstReturn = r; worst = id }
-  }
+  results: RoundResults
+}) {
+  const myOutcome = results.teamOutcomes.find((outcome) => outcome.teamId === myTeamId) ?? null
+  const { best, worst } = getRoundSummary(results)
 
   return (
     <div className="results-overlay">
-      <div className="results-panel">
-        <div className="results-header">
-          <div className="results-year">{results.yearRange}</div>
-          <h2>{results.title} — Results</h2>
-        </div>
-
-        <div className="market-summary">
-          <h3>Market Performance</h3>
-          <div className="company-results">
-            {COMPANY_IDS.map((id) => {
-              const ret = results.actualReturns[id]
-              const reveal = results.yearEndReveal[id]
-              const meta = COMPANY_META[id]
-              const isBest = id === best
-              const isWorst = id === worst
-              const positive = ret >= 0
-
-              return (
-                <div key={id} className={`company-result ${isBest ? 'best' : ''} ${isWorst ? 'worst' : ''}`}>
-                  <div className="result-header">
-                    <span className="result-emoji">{meta.emoji}</span>
-                    <span className="result-name">{meta.fullName}</span>
-                    <span className={`result-return ${positive ? 'positive' : 'negative'}`}>
-                      {formatReturn(ret * 100)}
-                    </span>
-                  </div>
-                  <p className="result-reveal">{reveal}</p>
-                  {myOutcome && myOutcome.investments[id] > 0 && (
-                    <div className="my-result">
-                      <span>You invested {formatCurrency(myOutcome.investments[id])}</span>
-                      <span className={`my-return ${myOutcome.breakdown[id].returns >= 0 ? 'positive' : 'negative'}`}>
-                        {myOutcome.breakdown[id].returns >= 0 ? '+' : ''}{formatCurrency(myOutcome.breakdown[id].returns)}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+      <div className="results-sheet surface-panel">
+        <div className="results-title-row">
+          <div>
+            <span className="eyebrow">Round {results.round}</span>
+            <h2>{results.title} Results</h2>
           </div>
+          <button className="ghost-button" type="button" onClick={onDismiss}>
+            Close
+          </button>
         </div>
 
-        {myOutcome && (
-          <div className={`my-summary ${myOutcome.returns >= 0 ? 'positive' : 'negative'}`}>
-            <div className="summary-row">
-              <span>Total Invested</span>
+        <div className="result-grid">
+          {COMPANY_IDS.map((companyId) => {
+            const meta = COMPANY_META[companyId]
+            const currentReturn = results.actualReturns[companyId]
+            const reveal = results.yearEndReveal[companyId]
+            const myBreakdown = myOutcome?.breakdown[companyId]
+
+            return (
+              <article
+                key={companyId}
+                className={`result-card ${companyId === best ? 'best' : ''} ${companyId === worst ? 'worst' : ''}`}
+              >
+                <div className="result-card-head">
+                  <span className="company-emoji">{meta.emoji}</span>
+                  <div>
+                    <strong>{companyId.replace('_', ' ')}</strong>
+                    <span>{formatReturnMultiplier(currentReturn)}</span>
+                  </div>
+                </div>
+                <p>{reveal}</p>
+                {myBreakdown ? (
+                  <div className="result-card-foot">
+                    <span>You invested {formatCurrency(myBreakdown.invested)}</span>
+                    <strong className={myBreakdown.returns >= 0 ? 'positive' : 'negative'}>
+                      {myBreakdown.returns >= 0 ? '+' : ''}
+                      {formatCurrency(myBreakdown.returns)}
+                    </strong>
+                  </div>
+                ) : null}
+              </article>
+            )
+          })}
+        </div>
+
+        {myOutcome ? (
+          <div className="summary-band">
+            <div>
+              <span className="mini-label">Total invested</span>
               <strong>{formatCurrency(myOutcome.totalInvested)}</strong>
             </div>
-            <div className="summary-row">
-              <span>Returns</span>
+            <div>
+              <span className="mini-label">Returns</span>
               <strong className={myOutcome.returns >= 0 ? 'positive' : 'negative'}>
-                {myOutcome.returns >= 0 ? '+' : ''}{formatCurrency(myOutcome.returns)}
+                {myOutcome.returns >= 0 ? '+' : ''}
+                {formatCurrency(myOutcome.returns)}
               </strong>
             </div>
-            <div className="summary-row highlight">
-              <span>New Purse Balance</span>
-              <strong>{formatCurrency(myOutcome.purse)}</strong>
-            </div>
-            <div className="summary-row">
-              <span>Return %</span>
+            <div>
+              <span className="mini-label">Return rate</span>
               <strong>{formatReturn(myOutcome.percentReturn)}</strong>
             </div>
+            <div>
+              <span className="mini-label">New purse</span>
+              <strong>{formatCurrency(myOutcome.purse)}</strong>
+            </div>
           </div>
-        )}
-
-        <button className="dismiss-button" onClick={onDismiss}>
-          Continue →
-        </button>
+        ) : null}
       </div>
     </div>
   )
 }
 
-interface PurseDisplayProps {
+function PortfolioStrip({
+  purse,
+  totalInvestedAmount,
+  totalValue,
+}: {
   purse: number
-  totalInvested: number
+  totalInvestedAmount: number
   totalValue: number
-}
-
-function PurseDisplay({ purse, totalInvested, totalValue }: PurseDisplayProps) {
-  const investedPercent = totalValue > 0 ? (totalInvested / totalValue) * 100 : 0
-  const pursePercent = totalValue > 0 ? (purse / totalValue) * 100 : 100
-
+}) {
   return (
-    <div className="purse-display">
-      <div className="purse-main">
-        <div className="purse-section">
-          <span className="purse-label">Available Cash</span>
-          <span className="purse-amount">{formatCurrency(purse)}</span>
-        </div>
-        <div className="purse-divider" />
-        <div className="purse-section">
-          <span className="purse-label">Invested</span>
-          <span className="invested-amount">{formatCurrency(totalInvested)}</span>
-        </div>
-        <div className="purse-divider" />
-        <div className="purse-section total">
-          <span className="purse-label">Total Value</span>
-          <span className="total-amount">{formatCurrency(totalValue)}</span>
-        </div>
-      </div>
-      <div className="purse-bar">
-        <div className="purse-bar-invested" style={{ width: `${investedPercent}%` }} />
-        <div className="purse-bar-cash" style={{ width: `${pursePercent}%` }} />
-      </div>
-    </div>
+    <section className="portfolio-strip">
+      <article className="metric-card surface-panel">
+        <span className="mini-label">Available cash</span>
+        <strong>{formatCurrency(purse)}</strong>
+      </article>
+      <article className="metric-card surface-panel">
+        <span className="mini-label">Invested capital</span>
+        <strong>{formatCurrency(totalInvestedAmount)}</strong>
+      </article>
+      <article className="metric-card surface-panel">
+        <span className="mini-label">Total value</span>
+        <strong>{formatCurrency(totalValue)}</strong>
+      </article>
+    </section>
   )
 }
 
@@ -327,55 +358,62 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const [serverMessage, setServerMessage] = useState<string | null>(null)
   const [investmentError, setInvestmentError] = useState<string | null>(null)
   const [pendingSubmit, setPendingSubmit] = useState(false)
-
-  const [localInvestments, setLocalInvestments] = useState<Record<CompanyId, number>>(blankInvestments())
+  const [localInvestments, setLocalInvestments] = useState(blankInvestments())
   const [localPurse, setLocalPurse] = useState(STARTING_PURSE)
-
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null)
   const [showResults, setShowResults] = useState(false)
 
-  useEffect(() => { requestedCredentialsRef.current = requestedCredentials }, [requestedCredentials])
-  useEffect(() => { joinedCredentialsRef.current = joinedCredentials }, [joinedCredentials])
+  useEffect(() => {
+    requestedCredentialsRef.current = requestedCredentials
+  }, [requestedCredentials])
+
+  useEffect(() => {
+    joinedCredentialsRef.current = joinedCredentials
+  }, [joinedCredentials])
+
+  useEffect(() => {
+    if (snapshot?.phase === 'live' || snapshot?.phase === 'paused' || snapshot?.phase === 'idle') {
+      setShowResults(false)
+    }
+  }, [snapshot?.phase, snapshot?.round])
 
   const countdownMs = useCountdown(snapshot)
   const hasRequestedCredentials = requestedCredentials !== null
   const viewerSubmission = snapshot?.viewerSubmission ?? EMPTY_SUBMISSION
-
-  const myTeamData = snapshot?.leaderboard.find((e) => e.teamId === joinedCredentials?.teamId)
+  const currentRound = snapshot?.currentRound ?? null
+  const myTeamData = snapshot?.leaderboard.find((entry) => entry.teamId === joinedCredentials?.teamId) ?? null
   const currentPurse = myTeamData?.purse ?? localPurse
   const currentInvestments = myTeamData?.investments ?? localInvestments
   const totalInvestedAmount = totalInvested(currentInvestments)
   const totalValue = currentPurse + totalInvestedAmount
-
-  const canSubmit = isPlayableSnapshot(snapshot) &&
+  const connectionLabel = buildConnectionLabel(connectionState, snapshot?.phase)
+  const canAdjustInvestments =
+    snapshot?.phase === 'live' &&
     connectionState === 'connected' &&
     viewerSubmission.canSubmit &&
-    !viewerSubmission.hasSubmitted &&
-    !pendingSubmit &&
-    hasInvestments(currentInvestments)
-
+    !viewerSubmission.hasSubmitted
+  const canSubmit = canAdjustInvestments && !pendingSubmit && hasInvestments(currentInvestments)
   const isSubmitted = viewerSubmission.hasSubmitted
+  const teamInvestmentSignature = JSON.stringify(myTeamData?.investments ?? null)
 
-  // Reset when round changes
   useEffect(() => {
     if (snapshot?.round) {
-      setLocalInvestments(blankInvestments())
       setPendingSubmit(false)
       setInvestmentError(null)
     }
   }, [snapshot?.round])
 
-  // Update local state from server
   useEffect(() => {
     if (myTeamData) {
       setLocalInvestments(myTeamData.investments)
       setLocalPurse(myTeamData.purse)
     }
-  }, [myTeamData?.purse, JSON.stringify(myTeamData?.investments)])
+  }, [myTeamData?.purse, teamInvestmentSignature])
 
-  // Socket setup
   useEffect(() => {
-    if (!requestedCredentialsRef.current || socketRef.current) return undefined
+    if (!requestedCredentialsRef.current || socketRef.current) {
+      return undefined
+    }
 
     const socket = socketFactory()
     socketRef.current = socket
@@ -383,43 +421,66 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
     const emitJoin = (credentials: TeamCredentials, reconnecting: boolean) => {
       setConnectionState(reconnecting ? 'reconnecting' : 'joining')
       setJoinError(null)
-      socket.emit('team:join', credentials, (response: AckResponse<{ team: { teamId: string; name: string; purse: number } }>) => {
-        if (response.ok) {
-          joinedCredentialsRef.current = credentials
-          setJoinedCredentials(credentials)
-          setLocalPurse(response.data.team.purse)
-          setConnectionState('connected')
-          return
-        }
-        if (reconnecting) { setServerMessage(response.error.message); setConnectionState('reconnecting'); return }
-        setJoinError(response.error.message)
-        setConnectionState(socket.connected ? 'idle' : 'connecting')
-      })
+
+      socket.emit(
+        'team:join',
+        credentials,
+        (response: AckResponse<{ team: { teamId: string; name: string; purse: number } }>) => {
+          if (response.ok) {
+            joinedCredentialsRef.current = credentials
+            setJoinedCredentials(credentials)
+            setLocalPurse(response.data.team.purse)
+            setConnectionState('connected')
+            return
+          }
+
+          if (reconnecting) {
+            setServerMessage(response.error.message)
+            setConnectionState('reconnecting')
+            return
+          }
+
+          setJoinError(response.error.message)
+          setConnectionState(socket.connected ? 'idle' : 'connecting')
+        },
+      )
     }
 
     const handleConnect = () => {
-      const creds = joinedCredentialsRef.current ?? requestedCredentialsRef.current
-      if (!creds) { setConnectionState('idle'); return }
-      emitJoin(creds, Boolean(joinedCredentialsRef.current))
+      const credentials = joinedCredentialsRef.current ?? requestedCredentialsRef.current
+      if (!credentials) {
+        setConnectionState('idle')
+        return
+      }
+
+      emitJoin(credentials, Boolean(joinedCredentialsRef.current))
     }
 
     const handleDisconnect = () => {
       setServerMessage(null)
-      if (joinedCredentialsRef.current) { setConnectionState('reconnecting'); return }
+      if (joinedCredentialsRef.current) {
+        setConnectionState('reconnecting')
+        return
+      }
+
       setConnectionState(requestedCredentialsRef.current ? 'connecting' : 'idle')
     }
 
     const handleConnectError = () => {
-      if (joinedCredentialsRef.current) { setConnectionState('reconnecting'); return }
+      if (joinedCredentialsRef.current) {
+        setConnectionState('reconnecting')
+        return
+      }
+
       if (requestedCredentialsRef.current) {
         setJoinError('Unable to reach the server. Retrying...')
         setConnectionState('connecting')
       }
     }
 
-    const handleSnapshot = (next: GameSnapshot) => {
-      setSnapshot(next)
-      if (next.viewerSubmission.canSubmit && !next.viewerSubmission.hasSubmitted) {
+    const handleSnapshot = (nextSnapshot: GameSnapshot) => {
+      setSnapshot(nextSnapshot)
+      if (nextSnapshot.viewerSubmission.canSubmit && !nextSnapshot.viewerSubmission.hasSubmitted) {
         setPendingSubmit(false)
         setInvestmentError(null)
       }
@@ -432,6 +493,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
         setLocalInvestments(status.investments)
         return
       }
+
       if (!status.accepted && status.error) {
         setPendingSubmit(false)
         setInvestmentError(status.error.message)
@@ -444,7 +506,11 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
     }
 
     const handleGameError = (error: SerializedError) => {
-      if (joinedCredentialsRef.current) { setServerMessage(error.message); return }
+      if (joinedCredentialsRef.current) {
+        setServerMessage(error.message)
+        return
+      }
+
       setJoinError(error.message)
     }
 
@@ -469,242 +535,403 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
     }
   }, [hasRequestedCredentials, socketFactory])
 
-  function handleJoinSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const credentials = { teamId: formValues.teamId.trim(), name: formValues.name.trim() }
-    if (!credentials.teamId || !credentials.name) { setJoinError('Team ID and team name are required.'); return }
+  function handleJoinSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    const credentials = {
+      teamId: formValues.teamId.trim(),
+      name: formValues.name.trim(),
+    }
+
+    if (!credentials.teamId || !credentials.name) {
+      setJoinError('Team ID and team name are required.')
+      return
+    }
+
     requestedCredentialsRef.current = credentials
     setRequestedCredentials(credentials)
     setJoinError(null)
+    setServerMessage(null)
+
     const activeSocket = socketRef.current
-    if (!activeSocket || !activeSocket.connected) { setConnectionState('connecting'); return }
+    if (!activeSocket || !activeSocket.connected) {
+      setConnectionState('connecting')
+      return
+    }
+
     setConnectionState('joining')
-    activeSocket.emit('team:join', credentials, (response: AckResponse<{ team: { teamId: string; name: string; purse: number } }>) => {
-      if (response.ok) {
-        joinedCredentialsRef.current = credentials
-        setJoinedCredentials(credentials)
-        setLocalPurse(response.data.team.purse)
-        setConnectionState('connected')
-        return
-      }
-      setJoinError(response.error.message)
-      setConnectionState('idle')
-    })
-  }
+    activeSocket.emit(
+      'team:join',
+      credentials,
+      (response: AckResponse<{ team: { teamId: string; name: string; purse: number } }>) => {
+        if (response.ok) {
+          joinedCredentialsRef.current = credentials
+          setJoinedCredentials(credentials)
+          setLocalPurse(response.data.team.purse)
+          setConnectionState('connected')
+          return
+        }
 
-  const handleInvest = useCallback((companyId: CompanyId, amount: number) => {
-    const socket = socketRef.current
-    if (!socket || !isPlayableSnapshot(snapshot)) return
-    setInvestmentError(null)
-    socket.emit('team:invest', { companyId, amount }, (response: AckResponse<{ purse: number; invested: number }>) => {
-      if (!response.ok) {
-        setInvestmentError(response.error.message)
-      }
-    })
-  }, [snapshot])
-
-  const handleWithdraw = useCallback((companyId: CompanyId, amount: number) => {
-    const socket = socketRef.current
-    if (!socket || !isPlayableSnapshot(snapshot)) return
-    setInvestmentError(null)
-    socket.emit('team:withdraw', { companyId, amount }, (response: AckResponse<{ purse: number; invested: number }>) => {
-      if (!response.ok) {
-        setInvestmentError(response.error.message)
-      }
-    })
-  }, [snapshot])
-
-  const handleSubmit = () => {
-    const socket = socketRef.current
-    if (!socket || !canSubmit) return
-    setPendingSubmit(true)
-    setInvestmentError(null)
-    socket.emit('team:submit', {}, (response: AckResponse<{ investments: Record<CompanyId, number> }>) => {
-      if (response.ok) return
-      setPendingSubmit(false)
-      setInvestmentError(response.error.message)
-    })
-  }
-
-  const isReconnecting = connectionState === 'reconnecting'
-
-  const statusLabel = isReconnecting
-    ? 'Reconnecting...'
-    : connectionState === 'connecting' || connectionState === 'joining'
-      ? 'Connecting...'
-      : snapshot?.phase === 'paused'
-        ? 'Round paused'
-        : snapshot?.phase === 'live'
-          ? 'Live round'
-          : snapshot?.phase === 'results'
-            ? 'Awaiting next round...'
-            : snapshot?.phase === 'finished'
-              ? 'Game over!'
-              : 'Standing by'
-
-  if (!joinedCredentials) {
-    return (
-      <main className="app-container">
-        <div className="join-container">
-          <div className="join-card">
-            <div className="game-title">
-              <h1>Market Masters</h1>
-              <p className="subtitle">Invest wisely. Time the market. Build your fortune.</p>
-            </div>
-
-            <div className="game-info">
-              <div className="info-item">
-                <span className="info-icon">💰</span>
-                <span>Start with ₹1,00,000</span>
-              </div>
-              <div className="info-item">
-                <span className="info-icon">🏢</span>
-                <span>6 Indian companies to invest in</span>
-              </div>
-              <div className="info-item">
-                <span className="info-icon">⏱️</span>
-                <span>60 seconds per round</span>
-              </div>
-            </div>
-
-            <form className="join-form" onSubmit={handleJoinSubmit}>
-              <div className="form-field">
-                <label htmlFor="teamId">Team ID</label>
-                <input id="teamId" autoComplete="off" placeholder="e.g., team-alpha" value={formValues.teamId} onChange={(e) => setFormValues((c) => ({ ...c, teamId: e.target.value }))} />
-              </div>
-              <div className="form-field">
-                <label htmlFor="name">Team Name</label>
-                <input id="name" autoComplete="off" placeholder="e.g., The Bulls" value={formValues.name} onChange={(e) => setFormValues((c) => ({ ...c, name: e.target.value }))} />
-              </div>
-              <button className="join-button" type="submit" disabled={connectionState === 'connecting' || connectionState === 'joining'}>
-                {connectionState === 'connecting' || connectionState === 'joining' ? 'Joining...' : 'Enter the Market'}
-              </button>
-            </form>
-
-            <p className="connection-status">{statusLabel}</p>
-            {joinError && <p className="error-message" role="alert">{joinError}</p>}
-          </div>
-        </div>
-      </main>
+        setJoinError(response.error.message)
+        setConnectionState('idle')
+      },
     )
   }
 
-  const currentRound = isPlayableSnapshot(snapshot) ? snapshot?.currentRound ?? null : null
+  function handleInvest(companyId: CompanyId, amount: number) {
+    const socket = socketRef.current
+    if (!socket || snapshot?.phase !== 'live') return
+    setInvestmentError(null)
+
+    socket.emit('team:invest', { amount, companyId }, (response: AckResponse<{ purse: number; invested: number }>) => {
+      if (!response.ok) {
+        setInvestmentError(response.error.message)
+      }
+    })
+  }
+
+  function handleWithdraw(companyId: CompanyId, amount: number) {
+    const socket = socketRef.current
+    if (!socket || snapshot?.phase !== 'live') return
+    setInvestmentError(null)
+
+    socket.emit('team:withdraw', { amount, companyId }, (response: AckResponse<{ purse: number; invested: number }>) => {
+      if (!response.ok) {
+        setInvestmentError(response.error.message)
+      }
+    })
+  }
+
+  function handleSubmit() {
+    const socket = socketRef.current
+    if (!socket || !canSubmit) return
+
+    setPendingSubmit(true)
+    setInvestmentError(null)
+
+    socket.emit('team:submit', {}, (response: AckResponse<{ investments: Record<CompanyId, number> }>) => {
+      if (!response.ok) {
+        setPendingSubmit(false)
+        setInvestmentError(response.error.message)
+      }
+    })
+  }
+
+  if (!joinedCredentials) {
+    return (
+      <section className="team-view">
+        <div className="view-intro">
+          <div>
+            <span className="eyebrow">Team Console</span>
+            <h2>Join the live investment desk</h2>
+            <p>
+              Connect your team, receive the current market narrative, and lock your capital before the host closes the round.
+            </p>
+          </div>
+          <div className="chip-row">
+            <span className="shell-chip">₹1,00,000 opening cash</span>
+            <span className="shell-chip">6 companies per round</span>
+            <span className="shell-chip">Up to 12 teams</span>
+          </div>
+        </div>
+
+        <div className="join-layout">
+          <section className="surface-panel hero-panel">
+            <span className="eyebrow">How it works</span>
+            <h3>Read the context, size your positions, then lock the round.</h3>
+            <p>
+              Cash stays liquid until you allocate it. Once you submit, your portfolio is frozen for scoring when the timer expires or the host ends the round early.
+            </p>
+            <div className="hero-stat-grid">
+              <div className="hero-stat">
+                <span className="mini-label">Timer control</span>
+                <strong>Host-configured</strong>
+              </div>
+              <div className="hero-stat">
+                <span className="mini-label">Signals</span>
+                <strong>Historical company narratives</strong>
+              </div>
+              <div className="hero-stat">
+                <span className="mini-label">Scoring</span>
+                <strong>Returns settle into purse balance</strong>
+              </div>
+            </div>
+          </section>
+
+          <section className="surface-panel join-panel">
+            <span className="eyebrow">Enter the room</span>
+            <h3>Connect your team</h3>
+            <form className="join-form" onSubmit={handleJoinSubmit}>
+              <label className="field">
+                <span>Team ID</span>
+                <input
+                  aria-label="Team ID"
+                  autoComplete="off"
+                  placeholder="team-alpha"
+                  value={formValues.teamId}
+                  onChange={(event) => setFormValues((current) => ({ ...current, teamId: event.target.value }))}
+                />
+              </label>
+              <label className="field">
+                <span>Team name</span>
+                <input
+                  aria-label="Team Name"
+                  autoComplete="off"
+                  placeholder="The Bulls"
+                  value={formValues.name}
+                  onChange={(event) => setFormValues((current) => ({ ...current, name: event.target.value }))}
+                />
+              </label>
+              <button className="primary-button" type="submit" disabled={connectionState === 'connecting' || connectionState === 'joining'}>
+                {connectionState === 'connecting' || connectionState === 'joining' ? 'Joining…' : 'Enter the market'}
+              </button>
+            </form>
+            <p className="subtle-line">Status: {connectionLabel}</p>
+            {joinError ? <p className="message-banner error">{joinError}</p> : null}
+          </section>
+        </div>
+      </section>
+    )
+  }
 
   return (
-    <main className="app-container dashboard">
-      {showResults && roundResults && (
-        <RoundResultsOverlay results={roundResults} myTeamId={joinedCredentials.teamId} onDismiss={() => setShowResults(false)} />
-      )}
+    <section className="team-view">
+      {showResults && roundResults ? (
+        <RoundResultsOverlay myTeamId={joinedCredentials.teamId} onDismiss={() => setShowResults(false)} results={roundResults} />
+      ) : null}
 
-      <header className="dashboard-header">
-        <div className="header-left">
-          <h1>{joinedCredentials.name}</h1>
-          <div className="round-info">
-            {snapshot ? `Round ${snapshot.round} of ${snapshot.totalRounds}` : 'Waiting for game to start'}
-            {snapshot?.currentRound && ` • ${snapshot.currentRound.yearRange}`}
-          </div>
-        </div>
-        <div className="header-right">
-          <div className={`status-badge ${isReconnecting ? 'warning' : snapshot?.phase === 'live' ? 'live' : ''}`}>
-            {statusLabel}
-          </div>
-          {currentRound && (
-            <div className="timer">
-              <span className="timer-icon">⏱️</span>
-              <span className="timer-value">{formatCountdown(countdownMs)}</span>
-            </div>
-          )}
-        </div>
-      </header>
-
-      <PurseDisplay purse={currentPurse} totalInvested={totalInvestedAmount} totalValue={totalValue} />
-
-      {currentRound ? (
-        <div className="round-context">
-          <div className="year-badge">{currentRound.year}</div>
-          <div className="context-content">
-            <h2>{currentRound.title}</h2>
-            <p>{currentRound.context}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="waiting-card">
+      <div className="view-intro">
+        <div>
+          <span className="eyebrow">Team Console</span>
+          <h2>{joinedCredentials.name}</h2>
           <p>
-            {snapshot?.phase === 'finished'
-              ? '🏁 Game over! Check the leaderboard.'
-              : snapshot?.phase === 'results'
-                ? '⏳ Admin is reviewing results...'
-                : '🕐 Waiting for the game to start...'}
+            {snapshot ? `Round ${snapshot.round} of ${snapshot.totalRounds}` : 'Waiting for the host to start the game'}
+            {currentRound ? ` • ${currentRound.yearRange}` : ''}
           </p>
         </div>
-      )}
-
-      {currentRound && (
-        <div className="investments-section">
-          <div className="section-header">
-            <h3>Investment Opportunities</h3>
-            <span className="section-hint">{isSubmitted ? 'Investments locked' : 'Tap amounts to invest or withdraw'}</span>
-          </div>
-
-          <div className="investment-grid">
-            {COMPANY_IDS.map((id) => {
-              const signal = currentRound.companies.find((c) => c.id === id)
-              return (
-                <InvestmentCard
-                  key={id}
-                  companyId={id}
-                  signal={signal}
-                  invested={currentInvestments[id] ?? 0}
-                  purse={currentPurse}
-                  onInvest={handleInvest}
-                  onWithdraw={handleWithdraw}
-                  disabled={!viewerSubmission.canSubmit || isReconnecting}
-                  isSubmitted={isSubmitted}
-                />
-              )
-            })}
-          </div>
-
-          <div className="submit-section">
-            {isSubmitted ? (
-              <div className="submitted-message">
-                <span className="check">✓</span>
-                <span>Investments locked for {snapshot?.currentRound?.year}</span>
-              </div>
-            ) : (
-              <button className="submit-investments-btn" disabled={!canSubmit || pendingSubmit} onClick={handleSubmit}>
-                {pendingSubmit ? 'Submitting...' : totalInvestedAmount > 0 ? `Lock Investments (${formatCurrency(totalInvestedAmount)})` : 'Make at least one investment'}
-              </button>
-            )}
-            {investmentError && <p className="error-message">{investmentError}</p>}
-          </div>
+        <div className="chip-row">
+          <span className={`phase-chip ${snapshot?.phase ?? 'idle'}`}>{formatPhaseLabel(snapshot?.phase ?? 'idle')}</span>
+          {snapshot ? <span className="shell-chip">Timer {formatCountdown(countdownMs || snapshot.roundDurationMs)}</span> : null}
+          <span className="shell-chip">{connectionLabel}</span>
         </div>
-      )}
+      </div>
 
-      {snapshot && snapshot.leaderboard.length > 0 && (
-        <div className="leaderboard-section">
-          <h3 className="section-title">Leaderboard</h3>
-          <div className="leaderboard">
-            {snapshot.leaderboard.map((entry, i) => (
-              <div key={entry.teamId} className={`leaderboard-row ${entry.teamId === joinedCredentials.teamId ? 'me' : ''} ${!entry.connected ? 'offline' : ''}`}>
-                <span className="rank">#{i + 1}</span>
-                <span className="team-name">{entry.name}</span>
-                <div className="team-value">
-                  <span className="value-main">{formatCurrency(entry.totalValue)}</span>
-                  <span className="value-detail">{formatCurrency(entry.purse)} cash + {formatCurrency(totalInvested(entry.investments))} invested</span>
+      <PortfolioStrip purse={currentPurse} totalInvestedAmount={totalInvestedAmount} totalValue={totalValue} />
+
+      <section className="surface-panel story-panel">
+        <div className="story-head">
+          <div>
+            <span className="eyebrow">Round context</span>
+            <h3>{currentRound ? currentRound.title : 'Waiting for the next scenario'}</h3>
+          </div>
+          {currentRound ? (
+            <div className="story-timer">
+              <span className="mini-label">Countdown</span>
+              <strong>{formatCountdown(countdownMs)}</strong>
+            </div>
+          ) : null}
+        </div>
+
+        {currentRound ? (
+          <div className="story-body">
+            <div className="year-medallion">{currentRound.year}</div>
+            <p>{currentRound.context}</p>
+          </div>
+        ) : (
+          <p className="waiting-copy">
+            {snapshot?.phase === 'results'
+              ? 'The round is in scoring. Results are about to settle.'
+              : snapshot?.phase === 'finished'
+                ? 'The game is finished. Review the leaderboard and final results.'
+                : 'The host has not started the next round yet.'}
+          </p>
+        )}
+      </section>
+
+      {currentRound ? (
+        <section className="surface-panel opportunities-panel">
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">Allocation board</span>
+              <h3>Build your portfolio</h3>
+            </div>
+            <div className="section-notes">
+              <span className="shell-chip">Configured timer {snapshot ? formatCountdown(snapshot.roundDurationMs) : '01:00.0'}</span>
+              <span className="shell-chip">
+                {isSubmitted
+                  ? 'Submitted'
+                  : canAdjustInvestments
+                    ? 'Open for changes'
+                    : snapshot?.phase === 'paused'
+                      ? 'Locked while paused'
+                      : 'Waiting'}
+              </span>
+            </div>
+          </div>
+
+          <div className="opportunity-grid">
+            {COMPANY_IDS.map((companyId) => (
+              <InvestmentCard
+                key={companyId}
+                companyId={companyId}
+                signal={currentRound.companies.find((company) => company.id === companyId)}
+                invested={currentInvestments[companyId] ?? 0}
+                purse={currentPurse}
+                disabled={!canAdjustInvestments}
+                isSubmitted={isSubmitted}
+                onInvest={handleInvest}
+                onWithdraw={handleWithdraw}
+              />
+            ))}
+          </div>
+
+          <div className="submit-rail">
+            <div>
+              <span className="mini-label">Round status</span>
+              <strong>
+                {isSubmitted
+                  ? 'Your portfolio is locked for scoring.'
+                  : snapshot?.phase === 'paused'
+                    ? 'The host paused the timer. You can review but not change positions.'
+                    : snapshot?.phase === 'live'
+                      ? 'Adjust positions until you lock the round.'
+                      : 'Waiting for the next market window.'}
+              </strong>
+            </div>
+            <button className="primary-button" type="button" disabled={!canSubmit} onClick={handleSubmit}>
+              {pendingSubmit
+                ? 'Locking…'
+                : hasInvestments(currentInvestments)
+                  ? `Lock portfolio (${formatCurrency(totalInvestedAmount)})`
+                  : 'Make at least one investment'}
+            </button>
+          </div>
+
+          {investmentError ? <p className="message-banner error">{investmentError}</p> : null}
+        </section>
+      ) : null}
+
+      {snapshot && snapshot.leaderboard.length > 0 ? (
+        <section className="surface-panel leaderboard-panel">
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">Rankings</span>
+              <h3>Live leaderboard</h3>
+            </div>
+            <span className="shell-chip">{snapshot.activeTeamsCount} active teams</span>
+          </div>
+          <div className="leaderboard-list">
+            {snapshot.leaderboard.map((entry, index) => (
+              <div
+                key={entry.teamId}
+                className={`leaderboard-row ${entry.teamId === joinedCredentials.teamId ? 'me' : ''} ${!entry.connected ? 'offline' : ''}`}
+              >
+                <span className="rank-pill">#{index + 1}</span>
+                <div className="leaderboard-name">
+                  <strong>{entry.name}</strong>
+                  <span>{entry.connected ? 'Connected' : 'Disconnected'}</span>
+                </div>
+                <div className="leaderboard-value">
+                  <strong>{formatCurrency(entry.totalValue)}</strong>
+                  <span>
+                    {formatCurrency(entry.purse)} cash • {formatCurrency(totalInvested(entry.investments))} invested
+                  </span>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        </section>
+      ) : null}
 
-      {serverMessage && <p className="info-message">{serverMessage}</p>}
+      {serverMessage ? <p className="message-banner info">{serverMessage}</p> : null}
+    </section>
+  )
+}
+
+export function MarketGameShell({
+  adminSocketFactory = createSocketClient,
+  teamSocketFactory = createSocketClient,
+}: {
+  adminSocketFactory?: SocketFactory
+  teamSocketFactory?: SocketFactory
+}) {
+  const [mode, setMode] = useState<ShellMode>(() => getModeFromHash(window.location.hash))
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      setMode(getModeFromHash(window.location.hash))
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange)
+    }
+  }, [])
+
+  function handleModeChange(nextMode: ShellMode) {
+    setMode(nextMode)
+    syncModeHash(nextMode)
+  }
+
+  return (
+    <main className="app-shell">
+      <section className="experience-shell">
+        <header className="shell-header">
+          <div className="brand-column">
+            <span className="eyebrow">Invest Neutron 3</span>
+            <h1>Market Masters Arena</h1>
+            <p>
+              One room for live team allocations and host control, with synced round timing, early-close controls, and
+              resilient in-memory gameplay.
+            </p>
+          </div>
+
+          <div className="shell-action-column">
+            <div className="mode-switch" role="tablist" aria-label="Workspace mode">
+              <button
+                className={mode === 'team' ? 'active' : ''}
+                type="button"
+                aria-pressed={mode === 'team'}
+                onClick={() => handleModeChange('team')}
+              >
+                Team Console
+              </button>
+              <button
+                className={mode === 'host' ? 'active' : ''}
+                type="button"
+                aria-pressed={mode === 'host'}
+                onClick={() => handleModeChange('host')}
+              >
+                Host Console
+              </button>
+            </div>
+
+            <div className="chip-row">
+              <span className="shell-chip">6 scenario rounds</span>
+              <span className="shell-chip">12 team capacity</span>
+              <span className="shell-chip">Live timer sync</span>
+            </div>
+          </div>
+        </header>
+
+        <section className="workspace-frame">
+          {mode === 'team' ? (
+            <TeamDashboardApp socketFactory={teamSocketFactory} />
+          ) : (
+            <AdminApp socketFactory={adminSocketFactory} />
+          )}
+        </section>
+      </section>
     </main>
   )
 }
 
-export default function App() {
-  return <TeamDashboardApp />
+export default function App({
+  adminSocketFactory = createSocketClient,
+  teamSocketFactory = createSocketClient,
+}: {
+  adminSocketFactory?: SocketFactory
+  teamSocketFactory?: SocketFactory
+}) {
+  return <MarketGameShell adminSocketFactory={adminSocketFactory} teamSocketFactory={teamSocketFactory} />
 }

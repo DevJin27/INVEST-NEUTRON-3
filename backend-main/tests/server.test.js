@@ -21,6 +21,10 @@ async function registerSocket(port) {
   return socket;
 }
 
+async function waitForAdminRateLimitWindow() {
+  await new Promise((resolve) => setTimeout(resolve, 550));
+}
+
 afterEach(async () => {
   while (openSockets.length > 0) {
     const socket = openSockets.pop();
@@ -50,6 +54,7 @@ describe("HTTP and socket integration", () => {
     expect(response.body.phase).toBe("idle");
     expect(response.body.activeTeamsCount).toBe(1);
     expect(response.body.currentRound).toBe(0);
+    expect(response.body.roundDurationMs).toBe(120);
     expect(typeof response.body.uptimeMs).toBe("number");
   });
 
@@ -70,10 +75,13 @@ describe("HTTP and socket integration", () => {
     const startResponse = await emitWithAck(adminSocket, "admin:start-game");
     expect(startResponse.ok).toBe(true);
 
-    const submitResponse = await emitWithAck(teamSocket, "team:submit", { decision: "TRADE" });
+    const investResponse = await emitWithAck(teamSocket, "team:invest", { amount: 5000, companyId: "reliance" });
+    expect(investResponse.ok).toBe(true);
+
+    const submitResponse = await emitWithAck(teamSocket, "team:submit");
     expect(submitResponse.ok).toBe(true);
 
-    const duplicateResponse = await emitWithAck(teamSocket, "team:submit", { decision: "IGNORE" });
+    const duplicateResponse = await emitWithAck(teamSocket, "team:submit");
     expect(duplicateResponse.ok).toBe(false);
     expect(duplicateResponse.error.code).toBe("ALREADY_SUBMITTED");
 
@@ -101,8 +109,15 @@ describe("HTTP and socket integration", () => {
 
     expect(replacementSnapshot.viewerSubmission).toEqual({
       canSubmit: false,
-      decision: "TRADE",
       hasSubmitted: true,
+      investments: {
+        adani: 0,
+        byjus: 0,
+        hdfc_bank: 0,
+        infosys: 0,
+        reliance: 5000,
+        yes_bank: 0,
+      },
       teamId: "blue",
     });
 
@@ -110,7 +125,7 @@ describe("HTTP and socket integration", () => {
     expect(forcedOff.details.teamId).toBe("blue");
   });
 
-  it("enforces admin rate limits and the 10-team cap", async () => {
+  it("enforces admin rate limits and the 12-team cap", async () => {
     const { port } = await registerServer();
     const adminSocket = await registerSocket(port);
 
@@ -125,7 +140,7 @@ describe("HTTP and socket integration", () => {
     expect(rateLimited.error.code).toBe("ADMIN_RATE_LIMITED");
 
     const teamSockets = [];
-    for (let index = 0; index < 10; index += 1) {
+    for (let index = 0; index < 12; index += 1) {
       const socket = await registerSocket(port);
       teamSockets.push(socket);
       const response = await emitWithAck(socket, "team:join", {
@@ -138,12 +153,82 @@ describe("HTTP and socket integration", () => {
     const overflowSocket = await registerSocket(port);
     const overflowResponse = await emitWithAck(overflowSocket, "team:join", {
       name: "Overflow",
-      teamId: "team-11",
+      teamId: "team-13",
     });
 
     expect(overflowResponse.ok).toBe(false);
     expect(overflowResponse.error.code).toBe("TEAM_LIMIT_REACHED");
-    expect(teamSockets).toHaveLength(10);
+    expect(teamSockets).toHaveLength(12);
+  });
+
+  it("allows admins to set the round duration before the game starts", async () => {
+    const { http, port } = await registerServer();
+    const adminSocket = await registerSocket(port);
+
+    const adminAuth = await emitWithAck(adminSocket, "admin:authenticate", { secret: "top-secret" });
+    expect(adminAuth.ok).toBe(true);
+
+    const updateResponse = await emitWithAck(adminSocket, "admin:set-round-duration", {
+      roundDurationMs: 450,
+    });
+    expect(updateResponse).toEqual({
+      ok: true,
+      data: {
+        roundDurationMs: 450,
+      },
+    });
+
+    const healthResponse = await http.get("/health").expect(200);
+    expect(healthResponse.body.roundDurationMs).toBe(450);
+
+    await waitForAdminRateLimitWindow();
+    const startResponse = await emitWithAck(adminSocket, "admin:start-game");
+    expect(startResponse.ok).toBe(true);
+
+    await waitForAdminRateLimitWindow();
+    const liveUpdate = await emitWithAck(adminSocket, "admin:set-round-duration", {
+      roundDurationMs: 900,
+    });
+    expect(liveUpdate.ok).toBe(false);
+    expect(liveUpdate.error.code).toBe("INVALID_PHASE");
+  });
+
+  it("emits round results only once when an admin ends the round early", async () => {
+    const { port } = await registerServer({ ROUND_DURATION_MS: "150" });
+    const adminSocket = await registerSocket(port);
+    const adminSocket2 = await registerSocket(port);
+    const teamSocket = await registerSocket(port);
+
+    const adminAuth = await emitWithAck(adminSocket, "admin:authenticate", { secret: "top-secret" });
+    expect(adminAuth.ok).toBe(true);
+    const adminAuth2 = await emitWithAck(adminSocket2, "admin:authenticate", { secret: "top-secret" });
+    expect(adminAuth2.ok).toBe(true);
+
+    const teamJoin = await emitWithAck(teamSocket, "team:join", {
+      name: "Blue",
+      teamId: "blue",
+    });
+    expect(teamJoin.ok).toBe(true);
+
+    const resultEvents = [];
+    adminSocket.on("round:results", (payload) => {
+      resultEvents.push(payload);
+    });
+
+    const startResponse = await emitWithAck(adminSocket, "admin:start-game");
+    expect(startResponse.ok).toBe(true);
+
+    const endRoundResponse = await emitWithAck(adminSocket2, "admin:end-round");
+    expect(endRoundResponse.ok).toBe(true);
+    expect(endRoundResponse.data.ended).toBe(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 350));
+
+    expect(resultEvents).toHaveLength(1);
+
+    const lateSubmit = await emitWithAck(teamSocket, "team:submit");
+    expect(lateSubmit.ok).toBe(false);
+    expect(lateSubmit.error.code).toBe("ROUND_NOT_ACTIVE");
   });
 
   it("broadcasts SERVER_SHUTDOWN before closing sockets", async () => {

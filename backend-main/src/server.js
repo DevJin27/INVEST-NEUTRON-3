@@ -4,8 +4,8 @@ const express = require('express');
 const { Server } = require('socket.io');
 
 const { AuditLog } = require('./audit-log');
-const { ADMIN_ACTION_RATE_LIMIT_MS, GAME_PHASES } = require('./constants');
-const { AppError, createError, serializeError } = require('./errors');
+const { ADMIN_ACTION_RATE_LIMIT_MS } = require('./constants');
+const { createError, serializeError } = require('./errors');
 const { GameEngine } = require('./game-engine');
 const { createStateLock } = require('./mutex');
 const { loadConfig, loadGameData } = require('./validation');
@@ -68,6 +68,7 @@ function createRealtimeGameServer(options = {}) {
       totalRounds: engine.totalRounds,
       activeTeamsCount: engine.getActiveTeamsCount(),
       remainingMs: engine.getRemainingMs(),
+      roundDurationMs: engine.roundDurationMs,
       uptimeMs: Date.now() - serverStartedAt,
     });
   });
@@ -187,6 +188,14 @@ function createRealtimeGameServer(options = {}) {
         io.emit('round:started', roundStarted);
         emitSnapshotsToPublic();
         return roundStarted;
+      }, ack);
+    });
+
+    socket.on('admin:set-round-duration', async (payload = {}, ack) => {
+      await runAdminAction(socket, 'admin:set-round-duration', async () => {
+        const result = engine.setRoundDuration(payload);
+        emitSnapshotsToPublic();
+        return result;
       }, ack);
     });
 

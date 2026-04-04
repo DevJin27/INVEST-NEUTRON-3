@@ -1,20 +1,20 @@
-const defaultDeck = require("../src/data/signals.json");
-const { loadConfig, validateSignalDeck } = require("../src/validation");
+const defaultRounds = require("../src/data/portfolio-game.json");
+const { loadConfig, validateGameData } = require("../src/validation");
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
 describe("startup validation", () => {
-  it("accepts the bundled signal deck", () => {
-    expect(validateSignalDeck(defaultDeck)).toHaveLength(30);
+  it("accepts the bundled portfolio game data", () => {
+    expect(validateGameData(defaultRounds)).toHaveLength(6);
   });
 
   it("rejects missing ADMIN_SECRET", () => {
     let thrownError;
 
     try {
-      loadConfig({ PORT: "0", TOTAL_ROUNDS: "3" }, defaultDeck.length);
+      loadConfig({ PORT: "0" });
     } catch (error) {
       thrownError = error;
     }
@@ -23,7 +23,7 @@ describe("startup validation", () => {
     expect(thrownError.details.name).toBe("ADMIN_SECRET");
   });
 
-  it("rejects invalid TOTAL_ROUNDS above deck size", () => {
+  it("rejects invalid ROUND_DURATION_MS above the allowed maximum", () => {
     let thrownError;
 
     try {
@@ -31,31 +31,29 @@ describe("startup validation", () => {
         {
           ADMIN_SECRET: "secret",
           PORT: "0",
-          ROUND_DURATION_MS: "1000",
-          TOTAL_ROUNDS: "31",
-        },
-        defaultDeck.length
+          ROUND_DURATION_MS: "3600001",
+        }
       );
     } catch (error) {
       thrownError = error;
     }
 
     expect(thrownError.code).toBe("INVALID_CONFIG");
-    expect(thrownError.details.name).toBe("TOTAL_ROUNDS");
+    expect(thrownError.details.name).toBe("ROUND_DURATION_MS");
   });
 
-  it("rejects signal values outside the allowed range", () => {
-    const invalidDeck = clone(defaultDeck);
-    invalidDeck[0].value = 50;
+  it("rejects rounds with unknown companies", () => {
+    const invalidRounds = clone(defaultRounds);
+    invalidRounds[0].companies[0].id = "unknown-co";
 
     let thrownError;
     try {
-      validateSignalDeck(invalidDeck);
+      validateGameData(invalidRounds);
     } catch (error) {
       thrownError = error;
     }
 
     expect(thrownError.code).toBe("INVALID_SIGNAL_DECK");
-    expect(thrownError.details.signalId).toBe("s1");
+    expect(thrownError.details.reason).toContain("Unknown company id");
   });
 });

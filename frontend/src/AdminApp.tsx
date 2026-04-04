@@ -1,207 +1,504 @@
-import React, { useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useRef, useState } from 'react'
 import './AdminApp.css'
 import { createSocketClient } from './socket-client'
-import type {
-  AckResponse,
-  AdminSnapshot,
-  SocketLike,
-  RoundResults
-} from './types'
-import { getCountdownMs, formatCountdown, formatCurrency, formatReturnMultiplier } from './utils'
+import type { AckResponse, AdminSnapshot, AuditLogEntry, RoundResults, SerializedError, SocketLike } from './types'
+import { COMPANY_IDS } from './types'
+import {
+  formatCompactCurrency,
+  formatCountdown,
+  formatCurrency,
+  formatDuration,
+  formatPhaseLabel,
+  formatReturnMultiplier,
+  getCountdownMs,
+} from './utils'
+
+type SocketFactory = () => SocketLike
 
 const COMPANY_EMOJIS: Record<string, string> = {
-  reliance: '🏭', hdfc_bank: '🏦', infosys: '💻', yes_bank: '🏧', byjus: '📚', adani: '⚡',
+  reliance: '🏭',
+  hdfc_bank: '🏦',
+  infosys: '💻',
+  yes_bank: '🏧',
+  byjus: '📚',
+  adani: '⚡',
 }
 
-export function AdminApp() {
-  const socketRef = useRef<SocketLike | null>(null)
-  const [secret, setSecret] = useState('')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [authError, setAuthError] = useState<string | null>(null)
-  
-  const [snapshot, setSnapshot] = useState<AdminSnapshot | null>(null)
-  const [roundResults, setRoundResults] = useState<RoundResults | null>(null)
+function useCountdown(snapshot: AdminSnapshot | null) {
   const [, setTick] = useState(0)
 
-  // Timer tick
   useEffect(() => {
-    if (!snapshot || snapshot.phase !== 'live' || snapshot.endsAt === null) return
-    const id = window.setInterval(() => setTick(t => t + 1), 100)
-    return () => window.clearInterval(id)
-  }, [snapshot])
+    if (!snapshot || snapshot.phase !== 'live' || snapshot.endsAt === null) {
+      return undefined
+    }
 
-  useEffect(() => {
-    const socket = createSocketClient()
-    socketRef.current = socket
-
-    socket.on('disconnect', () => {
-      setIsAuthenticated(false)
-    })
-
-    socket.on('game:snapshot', (next: AdminSnapshot) => {
-      setSnapshot(next)
-      if (next.phase !== 'results') {
-        setRoundResults(null)
-      }
-    })
-
-    socket.on('round:results', (results: RoundResults) => {
-      setRoundResults(results)
-    })
-    
-    socket.on('round:started', (snap: AdminSnapshot) => {
-      console.log('Round started', snap)
-    })
+    const timerId = window.setInterval(() => {
+      setTick((current) => current + 1)
+    }, 100)
 
     return () => {
-      socket.disconnect()
+      window.clearInterval(timerId)
     }
-  }, [])
+  }, [snapshot?.phase, snapshot?.endsAt])
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!socketRef.current) return
-    setAuthError(null)
+  return getCountdownMs(snapshot)
+}
 
-    socketRef.current.emit('admin:authenticate', { secret }, (res: AckResponse<{ authenticated: boolean, snapshot: AdminSnapshot }>) => {
-      if (res.ok && res.data.authenticated) {
-        setIsAuthenticated(true)
-        setSnapshot(res.data.snapshot)
+function formatAuditTimestamp(timestamp: string) {
+  const date = new Date(timestamp)
+  return Number.isNaN(date.getTime())
+    ? timestamp
+    : date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+function AuditList({ entries }: { entries: AuditLogEntry[] }) {
+  if (entries.length === 0) {
+    return <p className="host-empty">No admin actions recorded yet.</p>
+  }
+
+  return (
+    <div className="audit-list">
+      {entries.slice(-6).reverse().map((entry) => (
+        <article key={`${entry.timestamp}-${entry.action}-${entry.socketId}`} className="audit-item">
+          <div className="audit-row">
+            <strong>{entry.action.replace('admin:', '')}</strong>
+            <span className={`audit-pill ${entry.result}`}>{entry.result}</span>
+          </div>
+          <p>{formatAuditTimestamp(entry.timestamp)}</p>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+export function AdminApp({ socketFactory = createSocketClient }: { socketFactory?: SocketFactory }) {
+  const socketRef = useRef<SocketLike | null>(null)
+  const durationDirtyRef = useRef(false)
+
+  const [secret, setSecret] = useState('')
+  const [snapshot, setSnapshot] = useState<AdminSnapshot | null>(null)
+  const [roundResults, setRoundResults] = useState<RoundResults | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [actionMessage, setActionMessage] = useState<string | null>(null)
+  const [pendingAction, setPendingAction] = useState<string | null>(null)
+  const [durationSeconds, setDurationSeconds] = useState('60')
+  const [durationDirty, setDurationDirty] = useState(false)
+
+  const countdownMs = useCountdown(snapshot)
+  const currentResults = roundResults ?? snapshot?.lastRoundResults ?? null
+
+  useEffect(() => {
+    durationDirtyRef.current = durationDirty
+  }, [durationDirty])
+
+  useEffect(() => {
+    const socket = socketFactory()
+    socketRef.current = socket
+
+    const handleDisconnect = () => {
+      setIsAuthenticated(false)
+      setPendingAction(null)
+      setActionError('Host connection lost. Reconnect to continue.')
+    }
+
+    const handleConnectError = () => {
+      setAuthError('Unable to reach the realtime server.')
+    }
+
+    const handleSnapshot = (nextSnapshot: AdminSnapshot) => {
+      setSnapshot(nextSnapshot)
+      if (nextSnapshot.phase === 'results' || nextSnapshot.phase === 'finished') {
+        setRoundResults(nextSnapshot.lastRoundResults)
       } else {
-        setAuthError(!res.ok ? res.error.message : 'Authentication failed')
+        setRoundResults(null)
       }
+
+      if (!durationDirtyRef.current || nextSnapshot.phase !== 'idle') {
+        setDurationSeconds(String(Math.max(1, Math.round(nextSnapshot.roundDurationMs / 1000))))
+        if (nextSnapshot.phase !== 'idle') {
+          setDurationDirty(false)
+        }
+      }
+    }
+
+    const handleRoundResults = (results: RoundResults) => {
+      setRoundResults(results)
+    }
+
+    const handleGameError = (error: SerializedError) => {
+      setActionError(error.message)
+      setPendingAction(null)
+    }
+
+    socket.on('disconnect', handleDisconnect)
+    socket.on('connect_error', handleConnectError)
+    socket.on('game:snapshot', handleSnapshot)
+    socket.on('round:results', handleRoundResults)
+    socket.on('game:error', handleGameError)
+
+    return () => {
+      socket.off('disconnect', handleDisconnect)
+      socket.off('connect_error', handleConnectError)
+      socket.off('game:snapshot', handleSnapshot)
+      socket.off('round:results', handleRoundResults)
+      socket.off('game:error', handleGameError)
+      socket.disconnect()
+      socketRef.current = null
+    }
+  }, [socketFactory])
+
+  function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!socketRef.current) return
+
+    setAuthError(null)
+    setActionError(null)
+
+    socketRef.current.emit(
+      'admin:authenticate',
+      { secret },
+      (response: AckResponse<{ authenticated: boolean; snapshot: AdminSnapshot }>) => {
+        if (response.ok && response.data.authenticated) {
+          setIsAuthenticated(true)
+          setSnapshot(response.data.snapshot)
+          setRoundResults(response.data.snapshot.lastRoundResults)
+          setDurationSeconds(String(Math.max(1, Math.round(response.data.snapshot.roundDurationMs / 1000))))
+          setDurationDirty(false)
+          setActionMessage('Host console connected.')
+          return
+        }
+
+        setAuthError(response.ok ? 'Authentication failed.' : response.error.message)
+      },
+    )
+  }
+
+  function runCommand(eventName: string, payload: Record<string, unknown> = {}, successMessage?: string) {
+    if (!socketRef.current) return
+
+    setPendingAction(eventName)
+    setActionError(null)
+    setActionMessage(null)
+
+    socketRef.current.emit(eventName, payload, (response: AckResponse<unknown>) => {
+      setPendingAction(null)
+
+      if (response.ok) {
+        if (successMessage) {
+          setActionMessage(successMessage)
+        }
+        return
+      }
+
+      setActionError(response.error.message)
     })
   }
 
-  const runCommand = (cmd: string) => {
-    socketRef.current?.emit(cmd, {}, (res: AckResponse<unknown>) => {
-      if (!res.ok) alert(`Action failed: ${res.error.message}`)
-    })
+  function handleTimerSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const parsedSeconds = Number.parseInt(durationSeconds, 10)
+
+    if (!Number.isFinite(parsedSeconds) || parsedSeconds <= 0) {
+      setActionError('Round timer must be a positive number of seconds.')
+      return
+    }
+
+    runCommand(
+      'admin:set-round-duration',
+      { roundDurationMs: parsedSeconds * 1000 },
+      `Timer updated to ${formatDuration(parsedSeconds * 1000)}.`,
+    )
+    setDurationDirty(false)
   }
 
   if (!isAuthenticated || !snapshot) {
     return (
-      <div className="admin-shell">
-        <form className="admin-login" onSubmit={handleLogin}>
-          <h1>Host Access</h1>
-          <input 
-            type="password" 
-            placeholder="Admin Secret" 
-            value={secret} 
-            onChange={e => setSecret(e.target.value)} 
-          />
-          <button type="submit">Unlock Dashboard</button>
-          {authError && <p style={{ color: '#fca5a5', marginTop: 12 }}>{authError}</p>}
-        </form>
-      </div>
+      <section className="host-view">
+        <div className="view-intro">
+          <div>
+            <span className="eyebrow">Host Console</span>
+            <h2>Control the live room</h2>
+            <p>Authenticate once, set the timer before launch, and run the round lifecycle from a single operating panel.</p>
+          </div>
+          <div className="chip-row">
+            <span className="shell-chip">Timer setup before launch</span>
+            <span className="shell-chip">End rounds early</span>
+            <span className="shell-chip">Live team monitoring</span>
+          </div>
+        </div>
+
+        <div className="host-auth-layout">
+          <section className="surface-panel hero-panel">
+            <span className="eyebrow">Operator notes</span>
+            <h3>Keep the room calm, visible, and fair.</h3>
+            <p>
+              The host console is tuned for quick decisions: prep the timer, watch team submissions, pause when needed, and
+              resolve a round instantly if the room needs to move on.
+            </p>
+          </section>
+
+          <section className="surface-panel auth-panel">
+            <span className="eyebrow">Authenticate</span>
+            <h3>Host Access</h3>
+            <form className="host-auth-form" onSubmit={handleLogin}>
+              <label className="field">
+                <span>Admin Secret</span>
+                <input
+                  aria-label="Admin Secret"
+                  type="password"
+                  placeholder="Enter the admin secret"
+                  value={secret}
+                  onChange={(event) => setSecret(event.target.value)}
+                />
+              </label>
+              <button className="primary-button" type="submit">
+                Unlock dashboard
+              </button>
+            </form>
+            {authError ? <p className="message-banner error">{authError}</p> : null}
+            {actionError ? <p className="message-banner error">{actionError}</p> : null}
+          </section>
+        </div>
+      </section>
     )
   }
 
-  const countdownMs = getCountdownMs(snapshot)
+  const isIdle = snapshot.phase === 'idle'
+  const isLive = snapshot.phase === 'live'
+  const isPaused = snapshot.phase === 'paused'
+  const isResults = snapshot.phase === 'results'
+  const isFinished = snapshot.phase === 'finished'
+  const leader = snapshot.leaderboard[0] ?? null
 
   return (
-    <div className="admin-shell">
-      <header className="admin-header">
-        <h1>Portfolio Challenge Host</h1>
-        <div className="admin-status">
-          <span className="admin-pill">Connected Teams: {snapshot.activeTeamsCount}</span>
-          <span className={`admin-pill ${snapshot.phase === 'live' ? 'live' : snapshot.phase === 'paused' ? 'paused' : ''}`}>
-            Phase: {snapshot.phase.toUpperCase()}
-          </span>
+    <section className="host-view">
+      <div className="view-intro">
+        <div>
+          <span className="eyebrow">Host Console</span>
+          <h2>Live room controls</h2>
+          <p>
+            Round {snapshot.round} of {snapshot.totalRounds} • {formatPhaseLabel(snapshot.phase)} phase
+          </p>
         </div>
-      </header>
-
-      <div className="admin-dashboard">
-        <div className="admin-panel">
-          <h2>Teams & Submissions</h2>
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-            {snapshot.teamSubmissions.map(team => (
-              <div key={team.teamId} className={`host-team-row ${team.hasSubmitted ? 'submitted' : 'pending'}`}>
-                <div>
-                  <strong style={{ display: 'block', fontSize: '1.1rem' }}>{team.name}</strong>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                    {team.connected ? '🟢 Online' : '🔴 Offline'} | 💰 {formatCurrency(team.purse)} + 📈 {formatCurrency(team.totalInvested)} = {formatCurrency(team.totalValue)}
-                  </span>
-                </div>
-                <div>
-                  {team.hasSubmitted ? <span title="Submitted">✅</span> : <span title="Waiting...">⏳</span>}
-                </div>
-              </div>
-            ))}
-            {snapshot.teamSubmissions.length === 0 && (
-              <p style={{ color: '#64748b' }}>No teams have joined yet.</p>
-            )}
-          </div>
+        <div className="chip-row">
+          <span className="phase-chip host">{formatPhaseLabel(snapshot.phase)}</span>
+          <span className="shell-chip">{snapshot.activeTeamsCount} active teams</span>
+          <span className="shell-chip">Timer {formatDuration(snapshot.roundDurationMs)}</span>
         </div>
+      </div>
 
-        <div className="admin-panel" style={{ background: 'transparent', border: 'none', padding: 0 }}>
-          
-          {(snapshot.phase === 'live' || snapshot.phase === 'paused') && snapshot.currentRound && (
-            <div className="host-big-round-card">
-              <div className="host-big-year">{snapshot.currentRound.year}</div>
-              <div className="host-big-title">{snapshot.currentRound.title}</div>
-              <div className="host-big-context">{snapshot.currentRound.context}</div>
-              <div className="host-timer">{formatCountdown(countdownMs)}</div>
+      <section className="host-summary-grid">
+        <article className="metric-card surface-panel">
+          <span className="mini-label">Configured timer</span>
+          <strong>{formatDuration(snapshot.roundDurationMs)}</strong>
+        </article>
+        <article className="metric-card surface-panel">
+          <span className="mini-label">Live countdown</span>
+          <strong>{isLive || isPaused ? formatCountdown(countdownMs) : '00:00.0'}</strong>
+        </article>
+        <article className="metric-card surface-panel">
+          <span className="mini-label">Top portfolio</span>
+          <strong>{leader ? formatCompactCurrency(leader.totalValue) : 'No teams yet'}</strong>
+        </article>
+      </section>
+
+      <div className="host-grid">
+        <section className="surface-panel stage-panel">
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">Stage</span>
+              <h3>Round spotlight</h3>
             </div>
-          )}
+            {snapshot.currentRound ? <span className="shell-chip">{snapshot.currentRound.yearRange}</span> : null}
+          </div>
 
-          {snapshot.phase === 'results' && roundResults && (
-            <div className="host-big-round-card" style={{ padding: '40px' }}>
-              <div className="host-big-title">{roundResults.title} Results</div>
+          {snapshot.currentRound && (isLive || isPaused) ? (
+            <div className="stage-hero">
+              <div className="stage-year">{snapshot.currentRound.year}</div>
+              <div className="stage-copy">
+                <h4>{snapshot.currentRound.title}</h4>
+                <p>{snapshot.currentRound.context}</p>
+              </div>
+              <div className="stage-clock">
+                <span className="mini-label">Countdown</span>
+                <strong>{formatCountdown(countdownMs)}</strong>
+              </div>
+            </div>
+          ) : null}
+
+          {currentResults && (isResults || isFinished) ? (
+            <div className="host-results">
+              <div className="host-results-head">
+                <h4>{currentResults.title} results</h4>
+                <span className="shell-chip">Year {currentResults.year}</span>
+              </div>
               <div className="host-results-grid">
-                {Object.entries(roundResults.actualReturns).map(([companyId, ret]) => (
-                  <div key={companyId} className="host-result-card">
-                    <span className="emoji">{COMPANY_EMOJIS[companyId] || '🏢'}</span>
-                    <div style={{ fontSize: '1.1rem', marginBottom: 8 }}>
-                      {snapshot.currentRound?.companies.find(c => c.id === companyId)?.name || companyId}
-                    </div>
-                    <div className={`host-result-value ${ret >= 0 ? 'positive' : 'negative'}`}>
-                      {formatReturnMultiplier(ret)}
-                    </div>
-                  </div>
+                {COMPANY_IDS.map((companyId) => (
+                  <article key={companyId} className="host-result-card">
+                    <span className="company-emoji">{COMPANY_EMOJIS[companyId]}</span>
+                    <strong>{companyId.replace('_', ' ')}</strong>
+                    <span className={currentResults.actualReturns[companyId] >= 0 ? 'positive' : 'negative'}>
+                      {formatReturnMultiplier(currentResults.actualReturns[companyId])}
+                    </span>
+                    <p>{currentResults.yearEndReveal[companyId]}</p>
+                  </article>
                 ))}
               </div>
             </div>
-          )}
+          ) : null}
 
-          {snapshot.phase === 'idle' && (
-             <div className="host-big-round-card">
-               <div className="host-big-year">READY</div>
-               <div className="host-big-title">Waiting to clear for launch</div>
-             </div>
-          )}
-          
-          {snapshot.phase === 'finished' && (
-             <div className="host-big-round-card">
-               <div className="host-big-year">GAME OVER</div>
-               <div className="host-big-title">Check Leaderboard on Left</div>
-             </div>
-          )}
+          {isIdle ? (
+            <div className="stage-empty">
+              <h4>Ready to open the room</h4>
+              <p>Set the timer, wait for teams to join, then start the first market year.</p>
+            </div>
+          ) : null}
 
-          <div className="host-controls">
-            {snapshot.phase === 'idle' && (
-              <button className="btn-start" onClick={() => runCommand('admin:start-game')}>Start Game</button>
-            )}
-            {snapshot.phase === 'live' && (
-              <>
-                <button className="btn-pause" onClick={() => runCommand('admin:pause-round')}>Pause Timer</button>
-                <button className="btn-danger" onClick={() => runCommand('admin:end-round')}>End Round Early</button>
-              </>
-            )}
-            {snapshot.phase === 'paused' && (
-              <button className="btn-resume" onClick={() => runCommand('admin:resume-round')}>Resume Timer</button>
-            )}
-            {(snapshot.phase === 'results' || snapshot.phase === 'finished') && (
-              <button className="btn-next" onClick={() => runCommand('admin:next-round')} disabled={snapshot.phase === 'finished'}>
-                {snapshot.phase === 'finished' ? 'No More Rounds' : 'Next Round'}
-              </button>
-            )}
-            <div style={{ flex: 1 }} />
-            <button className="btn-danger" onClick={() => runCommand('admin:reset-game')}>Reset Game</button>
+          {isFinished && leader ? (
+            <div className="stage-empty">
+              <h4>{leader.name} leads the table</h4>
+              <p>Final portfolio value: {formatCurrency(leader.totalValue)}</p>
+            </div>
+          ) : null}
+        </section>
+
+        <section className="surface-panel controls-panel">
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">Controls</span>
+              <h3>Timer and round flow</h3>
+            </div>
+            {pendingAction ? <span className="shell-chip">Running {pendingAction.replace('admin:', '')}</span> : null}
           </div>
-        </div>
+
+          <form className="timer-form" onSubmit={handleTimerSubmit}>
+            <label className="field">
+              <span>Round timer (seconds)</span>
+              <input
+                aria-label="Round timer"
+                type="number"
+                min="1"
+                max="3600"
+                value={durationSeconds}
+                disabled={!isIdle || pendingAction !== null}
+                onChange={(event) => {
+                  setDurationSeconds(event.target.value)
+                  setDurationDirty(true)
+                }}
+              />
+            </label>
+            <button
+              className="secondary-button"
+              type="submit"
+              disabled={!isIdle || pendingAction !== null || !durationDirty}
+            >
+              Update timer
+            </button>
+          </form>
+
+          <div className="control-grid">
+            <button
+              className="primary-button"
+              type="button"
+              disabled={!isIdle || pendingAction !== null}
+              onClick={() => runCommand('admin:start-game', {}, 'Game started.')}
+            >
+              Start game
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={!isLive || pendingAction !== null}
+              onClick={() => runCommand('admin:pause-round', {}, 'Round paused.')}
+            >
+              Pause timer
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={!isPaused || pendingAction !== null}
+              onClick={() => runCommand('admin:resume-round', {}, 'Round resumed.')}
+            >
+              Resume timer
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              disabled={!isLive || pendingAction !== null}
+              onClick={() => runCommand('admin:end-round', {}, 'Round ended early.')}
+            >
+              End round early
+            </button>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={(!isResults && !isFinished) || isFinished || pendingAction !== null}
+              onClick={() => runCommand('admin:next-round', {}, 'Next round opened.')}
+            >
+              Next round
+            </button>
+            <button
+              className="danger-button ghost"
+              type="button"
+              disabled={pendingAction !== null}
+              onClick={() => runCommand('admin:reset-game', {}, 'Game reset to idle.')}
+            >
+              Reset game
+            </button>
+          </div>
+
+          {actionMessage ? <p className="message-banner info">{actionMessage}</p> : null}
+          {actionError ? <p className="message-banner error">{actionError}</p> : null}
+        </section>
+
+        <section className="surface-panel teams-panel">
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">Teams</span>
+              <h3>Submissions and balances</h3>
+            </div>
+            <span className="shell-chip">{snapshot.teamSubmissions.length} joined teams</span>
+          </div>
+
+          {snapshot.teamSubmissions.length === 0 ? (
+            <p className="host-empty">No teams have joined yet.</p>
+          ) : (
+            <div className="team-status-list">
+              {snapshot.teamSubmissions.map((team) => (
+                <article key={team.teamId} className={`team-status-card ${team.hasSubmitted ? 'submitted' : 'pending'}`}>
+                  <div className="team-status-head">
+                    <div>
+                      <strong>{team.name}</strong>
+                      <p>{team.connected ? 'Connected' : 'Disconnected'}</p>
+                    </div>
+                    <span className={`team-state-pill ${team.hasSubmitted ? 'submitted' : 'pending'}`}>
+                      {team.hasSubmitted ? 'Submitted' : 'Waiting'}
+                    </span>
+                  </div>
+                  <div className="team-balance-row">
+                    <span>{formatCurrency(team.purse)} cash</span>
+                    <span>{formatCurrency(team.totalInvested)} invested</span>
+                    <strong>{formatCurrency(team.totalValue)} total</strong>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="surface-panel audit-panel">
+          <div className="section-head">
+            <div>
+              <span className="eyebrow">Audit</span>
+              <h3>Recent host actions</h3>
+            </div>
+          </div>
+          <AuditList entries={snapshot.auditLog} />
+        </section>
       </div>
-    </div>
+    </section>
   )
 }
 

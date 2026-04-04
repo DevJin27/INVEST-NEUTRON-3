@@ -21,12 +21,10 @@ function parseCorsOrigins(rawValue) {
   return origins.length > 0 ? origins : ['*'];
 }
 
-function loadConfig(env = process.env) {
-  const adminSecret = env.ADMIN_SECRET ? String(env.ADMIN_SECRET).trim() : '';
-  if (!adminSecret) throw createError('INVALID_CONFIG', { name: 'ADMIN_SECRET', reason: 'ADMIN_SECRET is required.' });
-
-  const port = parseIntegerEnv(env.PORT, DEFAULT_PORT, 'PORT');
-  const roundDurationMs = parseIntegerEnv(env.ROUND_DURATION_MS, DEFAULT_ROUND_DURATION_MS, 'ROUND_DURATION_MS');
+function validateRoundDurationMs(roundDurationMs) {
+  if (!Number.isInteger(roundDurationMs)) {
+    throw createError('INVALID_CONFIG', { name: 'ROUND_DURATION_MS', reason: 'Must be an integer.' });
+  }
 
   if (roundDurationMs <= 0 || roundDurationMs > MAX_ROUND_DURATION_MS) {
     throw createError('INVALID_CONFIG', {
@@ -34,6 +32,18 @@ function loadConfig(env = process.env) {
       reason: `Must be between 1 and ${MAX_ROUND_DURATION_MS}.`,
     });
   }
+
+  return roundDurationMs;
+}
+
+function loadConfig(env = process.env) {
+  const adminSecret = env.ADMIN_SECRET ? String(env.ADMIN_SECRET).trim() : '';
+  if (!adminSecret) throw createError('INVALID_CONFIG', { name: 'ADMIN_SECRET', reason: 'ADMIN_SECRET is required.' });
+
+  const port = parseIntegerEnv(env.PORT, DEFAULT_PORT, 'PORT');
+  const roundDurationMs = validateRoundDurationMs(
+    parseIntegerEnv(env.ROUND_DURATION_MS, DEFAULT_ROUND_DURATION_MS, 'ROUND_DURATION_MS')
+  );
 
   return {
     adminSecret,
@@ -139,4 +149,5 @@ module.exports = {
   parseCorsOrigins,
   validateAllocation,
   validateGameData,
+  validateRoundDurationMs,
 };

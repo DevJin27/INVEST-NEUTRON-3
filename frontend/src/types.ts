@@ -4,7 +4,6 @@ export type CompanyId = 'reliance' | 'hdfc_bank' | 'infosys' | 'yes_bank' | 'byj
 
 export const COMPANY_IDS: CompanyId[] = ['reliance', 'hdfc_bank', 'infosys', 'yes_bank', 'byjus', 'adani']
 
-// Investments are now amounts (in rupees), not percentages
 export type Investments = Record<CompanyId, number>
 
 export interface TeamCredentials {
@@ -47,15 +46,22 @@ export interface ViewerSubmission {
   canSubmit: boolean
 }
 
-export interface GameSnapshot {
-  activeTeamsCount: number
-  currentRound: RoundData | null
-  endsAt: number | null
-  leaderboard: LeaderboardEntry[]
+export interface CountdownState {
   phase: GamePhase
   remainingMs: number
+  endsAt: number | null
+}
+
+export interface BaseSnapshot extends CountdownState {
+  activeTeamsCount: number
+  currentRound: RoundData | null
+  leaderboard: LeaderboardEntry[]
   round: number
+  roundDurationMs: number
   totalRounds: number
+}
+
+export interface GameSnapshot extends BaseSnapshot {
   viewerSubmission: ViewerSubmission
 }
 
@@ -69,8 +75,17 @@ export interface TeamStatus {
   totalInvested: number
 }
 
-export interface AdminSnapshot extends Omit<GameSnapshot, 'viewerSubmission'> {
-  auditLog: unknown[]
+export interface AuditLogEntry {
+  action: string
+  result: string
+  socketId: string
+  timestamp: string
+  details?: Record<string, unknown>
+}
+
+export interface AdminSnapshot extends BaseSnapshot {
+  auditLog: AuditLogEntry[]
+  lastRoundResults: RoundResults | null
   teamSubmissions: TeamStatus[]
 }
 
@@ -119,13 +134,6 @@ export interface SocketLike {
   disconnect(): this
 }
 
-// Company result after round ends
-export interface CompanyResult {
-  yearlyReturn: number
-  yearEndReveal: string
-}
-
-// Team outcome after round evaluation
 export interface TeamOutcome {
   teamId: string
   name: string

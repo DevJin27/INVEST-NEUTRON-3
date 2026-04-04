@@ -7,10 +7,15 @@ const {
 } = require('./constants');
 const { createError } = require('./errors');
 const { evaluateInvestments } = require('./scoring');
+const { validateRoundDurationMs } = require('./validation');
+
+function createEmptyInvestments() {
+  return Object.fromEntries(COMPANY_IDS.map((id) => [id, 0]));
+}
 
 class GameEngine {
   constructor(options) {
-    this.rounds = options.rounds; // full game data array
+    this.rounds = Array.isArray(options.rounds) ? options.rounds : [];
     this.roundDurationMs = options.roundDurationMs;
     this.totalRounds = options.totalRounds;
     this.auditLog = options.auditLog;
@@ -84,7 +89,7 @@ class GameEngine {
     return {
       teamId: teamId || null,
       hasSubmitted: Boolean(submission),
-      investments: submission ? submission.investments : (team ? team.investments : {}),
+      investments: submission ? { ...submission.investments } : team ? { ...team.investments } : createEmptyInvestments(),
       canSubmit:
         Boolean(teamId) &&
         this.phase === GAME_PHASES.LIVE &&
@@ -121,6 +126,7 @@ class GameEngine {
       phase: this.phase,
       remainingMs: this.getRemainingMs(),
       round: this.round,
+      roundDurationMs: this.roundDurationMs,
       totalRounds: this.totalRounds,
     };
   }
@@ -131,6 +137,7 @@ class GameEngine {
       return {
         ...base,
         auditLog: this.auditLog.list(),
+        lastRoundResults: this.lastRoundResults,
         teamSubmissions: this.getTeamStatuses(),
       };
     }
@@ -178,7 +185,7 @@ class GameEngine {
     if (replacedSocketId) this.socketToTeam.delete(replacedSocketId);
 
     // Initialize with empty investments for new teams
-    const investments = existingTeam?.investments || Object.fromEntries(COMPANY_IDS.map(id => [id, 0]));
+    const investments = existingTeam?.investments ? { ...existingTeam.investments } : createEmptyInvestments();
     const purse = existingTeam?.purse ?? STARTING_PURSE_VALUE;
     const totalInvested = Object.values(investments).reduce((sum, val) => sum + val, 0);
 
@@ -208,7 +215,7 @@ class GameEngine {
   }
 
   startGame() {
-    if (this.isRoundInProgress()) throw createError('INVALID_PHASE', { phase: this.phase });
+    if (this.phase !== GAME_PHASES.IDLE) throw createError('INVALID_PHASE', { phase: this.phase });
     this.clearRoundTimer();
     this.submissions = new Map();
     this.round = 0;
@@ -219,7 +226,7 @@ class GameEngine {
     this.remainingMs = 0;
 
     for (const [teamId, team] of this.teams.entries()) {
-      const investments = Object.fromEntries(COMPANY_IDS.map(id => [id, 0]));
+      const investments = createEmptyInvestments();
       this.teams.set(teamId, {
         ...team,
         purse: STARTING_PURSE_VALUE,
@@ -232,7 +239,7 @@ class GameEngine {
   }
 
   beginRound() {
-    if (this.round >= this.totalRounds) {
+    if (this.round >= this.totalRounds || this.round >= this.rounds.length) {
       this.phase = GAME_PHASES.FINISHED;
       return { phase: this.phase, leaderboard: this.getLeaderboard() };
     }
@@ -279,6 +286,17 @@ class GameEngine {
     return { endsAt: this.endsAt, remainingMs: this.remainingMs, round: this.round };
   }
 
+  setRoundDuration({ roundDurationMs }) {
+    if (this.phase !== GAME_PHASES.IDLE) {
+      throw createError('INVALID_PHASE', { phase: this.phase, reason: 'Round duration can only be changed before the game starts.' });
+    }
+
+    const normalizedRoundDurationMs = validateRoundDurationMs(Math.round(Number(roundDurationMs)));
+    this.roundDurationMs = normalizedRoundDurationMs;
+
+    return { roundDurationMs: this.roundDurationMs };
+  }
+
   setPurseValue({ teamId, value }) {
     if (this.isRoundInProgress()) {
       throw createError('INVALID_PHASE', { phase: this.phase, reason: 'Overrides disabled during live rounds.' });
@@ -311,7 +329,7 @@ class GameEngine {
     this.closeAt = null;
     this.remainingMs = 0;
     for (const [teamId, team] of this.teams.entries()) {
-      const investments = Object.fromEntries(COMPANY_IDS.map(id => [id, 0]));
+      const investments = createEmptyInvestments();
       this.teams.set(teamId, {
         ...team,
         purse: STARTING_PURSE_VALUE,

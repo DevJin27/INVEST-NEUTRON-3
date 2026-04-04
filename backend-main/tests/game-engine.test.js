@@ -1,14 +1,26 @@
 const { AuditLog } = require("../src/audit-log");
+const defaultRounds = require("../src/data/portfolio-game.json");
 const { GAME_PHASES, GRACE_WINDOW_MS } = require("../src/constants");
-const defaultDeck = require("../src/data/signals.json");
 const { GameEngine } = require("../src/game-engine");
+
+function blankInvestments(overrides = {}) {
+  return {
+    reliance: 0,
+    hdfc_bank: 0,
+    infosys: 0,
+    yes_bank: 0,
+    byjus: 0,
+    adani: 0,
+    ...overrides,
+  };
+}
 
 function createEngine(options = {}) {
   return new GameEngine({
     auditLog: new AuditLog(20, { info() {} }),
-    deck: defaultDeck,
-    roundDurationMs: options.roundDurationMs || 1000,
-    totalRounds: options.totalRounds || 2,
+    roundDurationMs: options.roundDurationMs ?? 1000,
+    rounds: defaultRounds,
+    totalRounds: options.totalRounds ?? 2,
   });
 }
 
@@ -68,7 +80,8 @@ describe("game engine timers and state", () => {
 
     engine.joinTeam({ name: "Team 1", socketId: "socket-1", teamId: "team-1" });
     engine.startGame();
-    engine.submitDecision({ decision: "TRADE", socketId: "socket-1" });
+    engine.invest({ amount: 5000, companyId: "reliance", socketId: "socket-1" });
+    engine.submitInvestments({ socketId: "socket-1" });
     engine.disconnectSocket("socket-1");
     engine.joinTeam({ name: "Team 1", socketId: "socket-2", teamId: "team-1" });
 
@@ -76,9 +89,56 @@ describe("game engine timers and state", () => {
 
     expect(snapshot.viewerSubmission).toEqual({
       canSubmit: false,
-      decision: "TRADE",
       hasSubmitted: true,
+      investments: blankInvestments({ reliance: 5000 }),
       teamId: "team-1",
     });
+  });
+
+  it("updates the round duration only while idle and keeps it after reset", () => {
+    const engine = createEngine({ roundDurationMs: 1000, totalRounds: 1 });
+
+    expect(engine.setRoundDuration({ roundDurationMs: 4500 })).toEqual({ roundDurationMs: 4500 });
+    expect(engine.getBaseSnapshot().roundDurationMs).toBe(4500);
+
+    engine.startGame();
+
+    let thrownError;
+    try {
+      engine.setRoundDuration({ roundDurationMs: 5000 });
+    } catch (error) {
+      thrownError = error;
+    }
+
+    expect(thrownError.code).toBe("INVALID_PHASE");
+
+    engine.forceEndRound();
+    engine.resetGame();
+    expect(engine.getBaseSnapshot().roundDurationMs).toBe(4500);
+  });
+
+  it("force ends a round once and prevents the timer from resolving again later", async () => {
+    const engine = createEngine({ roundDurationMs: 1000, totalRounds: 1 });
+    const onRoundClosed = vi.fn(() => engine.evaluateRoundIfNeeded());
+    engine.setRoundCloseHandler(onRoundClosed);
+    engine.joinTeam({ name: "Team 1", socketId: "socket-1", teamId: "team-1" });
+
+    engine.startGame();
+    const results = engine.forceEndRound();
+
+    expect(results.round).toBe(1);
+    expect(engine.phase).toBe(GAME_PHASES.FINISHED);
+
+    let thrownError;
+    try {
+      engine.submitInvestments({ socketId: "socket-1" });
+    } catch (error) {
+      thrownError = error;
+    }
+
+    expect(thrownError.code).toBe("ROUND_NOT_ACTIVE");
+
+    await vi.advanceTimersByTimeAsync(1000 + GRACE_WINDOW_MS + 1);
+    expect(onRoundClosed).not.toHaveBeenCalled();
   });
 });
