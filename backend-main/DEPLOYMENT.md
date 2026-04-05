@@ -1,7 +1,7 @@
 # Auction Game Server - Deployment Guide
 
 ## Overview
-Real-time auction game server using Express and Socket.io. Teams compete by trading on signals (ALPHA vs NOISE).
+Real-time auction game server using Express and Socket.io. Teams compete by making portfolio investments across multiple rounds based on historical narratives.
 
 ## Quick Start
 
@@ -27,7 +27,7 @@ npm test
 | `ADMIN_SECRET` | **Yes** | - | Admin authentication key |
 | `CORS_ORIGINS` | No | * | Allowed CORS origins (comma-separated) |
 | `ROUND_DURATION_MS` | No | 10000 | Round duration in milliseconds |
-| `TOTAL_ROUNDS` | No | 30 | Total rounds per game (max 30) |
+| `TOTAL_ROUNDS` | No | 6 | Total rounds per game |
 
 ## Render Deployment
 
@@ -80,10 +80,12 @@ services:
 | `admin:pause-round` | Yes | Pause round |
 | `admin:resume-round` | Yes | Resume round |
 | `admin:reset-game` | Yes | Reset game |
-| `admin:set-score` | Yes | Override team score |
+| `admin:set-purse-value` | Yes | Override team purse value |
 | `admin:get-audit-log` | Yes | Get audit log (rate limited) |
 | `team:join` | No | Join as team |
-| `team:submit` | No | Submit decision (TRADE/IGNORE) |
+| `team:invest` | No | Invest in a company |
+| `team:withdraw` | No | Withdraw from a company |
+| `team:submit` | No | Submit portfolio investments |
 
 #### Server → Client
 
@@ -95,19 +97,18 @@ services:
 | `round:paused` | Round paused |
 | `round:resumed` | Round resumed |
 | `round:submission-status` | Submission confirmation |
+| `investment:updated` | Investment update confirmation |
 | `game:error` | Error notification |
 
 ## Game Rules
 
-1. **Signals**: 30 signals (15 ALPHA, 15 NOISE) randomly shuffled
-2. **Teams**: Maximum 10 teams
-3. **Decisions**: TRADE or IGNORE on each signal
+1. **Rounds**: 6 rounds depicting historical market events.
+2. **Teams**: Maximum 12 teams
+3. **Decisions**: Invest or withdraw capital across 6 companies per round.
 4. **Scoring**:
-   - ALPHA + TRADE: +signal value
-   - ALPHA + IGNORE: -100 (missed opportunity)
-   - NOISE + IGNORE: +100 (correct ignore)
-   - NOISE + TRADE: -65% of signal value (false trade)
-   - No response: 0 or -100 depending on signal type
+   - Returns are calculated based on actual historical performance.
+   - Proceeds return to the team's purse after each round.
+   - Total Value = Purse + Sum of all current investments.
 
 ## Security Notes
 

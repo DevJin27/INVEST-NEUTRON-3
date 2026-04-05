@@ -14,7 +14,7 @@ This service provides the in-memory game engine for the auction game. It uses Ex
 - `PORT` HTTP/WebSocket port, default `3000`
 - `CORS_ORIGINS` comma-separated allowlist for browser clients, default `*`
 - `ROUND_DURATION_MS` round countdown duration, default `10000`
-- `TOTAL_ROUNDS` number of rounds to play, default `30`
+- `TOTAL_ROUNDS` number of rounds to play, default `6`
 
 ## Deployment Notes
 

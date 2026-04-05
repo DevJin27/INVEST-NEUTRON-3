@@ -116,9 +116,9 @@ export function hasInvestments(investments: Investments): boolean {
 export function getQuickInvestAmounts(purse: number): number[] {
   if (purse <= 0) return []
   const candidates = [
-    Math.max(1_000, Math.floor(purse * 0.1)),
-    Math.max(1_000, Math.floor(purse * 0.25)),
-    Math.max(1_000, Math.floor(purse * 0.5)),
+    Math.max(100, Math.ceil(purse * 0.1)),
+    Math.max(100, Math.ceil(purse * 0.25)),
+    Math.max(100, Math.ceil(purse * 0.5)),
   ]
 
   return [...new Set(candidates)].filter((amount) => amount > 0 && amount <= purse)

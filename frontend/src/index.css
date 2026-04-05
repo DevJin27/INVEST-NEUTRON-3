@@ -57,6 +57,20 @@
   --radius-xl: 16px;
   --radius-2xl: 24px;
   --radius-full: 9999px;
+
+  /* Custom Property Mappings for Components */
+  --surface: var(--bg-card);
+  --border-soft: var(--border-sm);
+  --border-strong: var(--border-md);
+  --positive: rgba(16,185,129,.15);
+  --positive-strong: var(--success-light);
+  --negative: rgba(239,68,68,.12);
+  --negative-strong: var(--danger-light);
+  --accent-strong: var(--accent-light);
+  --info: rgba(59,130,246,.12);
+  --info-strong: var(--info);
+  --shadow-deep: var(--shadow-lg);
+  --mono: var(--font-mono);
 }
 
 /* Base Reset & Modern Setup */

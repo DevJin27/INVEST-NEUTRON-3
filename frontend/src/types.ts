@@ -11,14 +11,19 @@ export interface TeamCredentials {
   name: string
 }
 
+export interface NewsItem {
+  id: string
+  source: string
+  headline: string
+  detail: string
+  sentiment: 'positive' | 'negative' | 'neutral'
+}
+
 export interface CompanySignal {
   id: CompanyId
   name: string
   sector: string
-  headline: string
-  sentiment: 'positive' | 'negative' | 'neutral'
-  detail: string
-  credibility: number
+  newsFeed: NewsItem[]
 }
 
 export interface RoundData {

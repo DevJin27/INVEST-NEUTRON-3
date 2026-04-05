@@ -38,7 +38,6 @@ import {
 type SocketFactory = () => SocketLike
 type ShellMode = 'team' | 'host'
 
-const STARTING_PURSE = 100000
 
 const COMPANY_META: Record<CompanyId, { emoji: string; accent: string }> = {
   reliance: { emoji: '🏭', accent: '#7eb7ff' },
@@ -149,29 +148,33 @@ function InvestmentCard({
             <p>{signal.sector}</p>
           </div>
         </div>
-        <span className="sentiment-pill" style={{ color: sentimentColor(signal.sentiment) }}>
-          {sentimentLabel(signal.sentiment)}
-        </span>
       </div>
 
-      <div className="opportunity-story">
-        <p className="headline">{signal.headline}</p>
-        <p className="detail">{signal.detail}</p>
+      <div className="news-feed-container" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto', paddingRight: '8px' }}>
+        {signal.newsFeed.map((news) => {
+          const isSponsored = news.source.includes('Promoted') || news.source.includes('Sponsored') || news.source.includes('Paid');
+          return (
+            <div key={news.id} className="news-item" style={{ padding: '12px', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-soft)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: isSponsored ? 'var(--accent-strong)' : 'var(--mono)' }}>
+                  {news.source}
+                </span>
+                <span className="sentiment-pill" style={{ color: sentimentColor(news.sentiment), fontSize: '10px', padding: '2px 6px' }}>
+                  {sentimentLabel(news.sentiment)}
+                </span>
+              </div>
+              <p className="headline" style={{ margin: '0 0 6px 0', fontSize: '14px', lineHeight: 1.3 }}>{news.headline}</p>
+              <p className="detail" style={{ margin: 0, fontSize: '13px', lineHeight: 1.4 }}>{news.detail}</p>
+            </div>
+          );
+        })}
       </div>
 
-      <div className="signal-meta-row">
-        <div className="signal-metric">
-          <span>Credibility</span>
-          <strong>{signal.credibility}%</strong>
-        </div>
-        <div className="signal-metric">
-          <span>Locked</span>
+      <div className="signal-meta-row" style={{ marginTop: '4px', marginBottom: '16px' }}>
+        <div className="signal-metric" style={{ width: '100%' }}>
+          <span>Locked Allocation</span>
           <strong>{investmentPercent}%</strong>
         </div>
-      </div>
-
-      <div className="credibility-track" role="progressbar" aria-valuenow={signal.credibility} aria-valuemin={0} aria-valuemax={100}>
-        <div className="credibility-fill" style={{ width: `${signal.credibility}%`, background: meta.accent }} />
       </div>
 
       <div className="investment-footer">
@@ -359,7 +362,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const [investmentError, setInvestmentError] = useState<string | null>(null)
   const [pendingSubmit, setPendingSubmit] = useState(false)
   const [localInvestments, setLocalInvestments] = useState(blankInvestments())
-  const [localPurse, setLocalPurse] = useState(STARTING_PURSE)
+  const [localPurse, setLocalPurse] = useState(0)
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null)
   const [showResults, setShowResults] = useState(false)
 
@@ -792,7 +795,9 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
                 {isSubmitted
                   ? 'Your portfolio is locked for scoring.'
                   : snapshot?.phase === 'paused'
-                    ? 'The host paused the timer. You can review but not change positions.'
+                    ? hasInvestments(currentInvestments)
+                      ? 'Portfolio saved — waiting for host to resume'
+                      : 'The host paused the timer. You can review but not change positions.'
                     : snapshot?.phase === 'live'
                       ? 'Adjust positions until you lock the round.'
                       : 'Waiting for the next market window.'}

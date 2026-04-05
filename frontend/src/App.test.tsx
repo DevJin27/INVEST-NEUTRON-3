@@ -32,55 +32,37 @@ function createRoundData(): RoundData {
         id: 'reliance',
         name: 'Reliance Industries',
         sector: 'Conglomerate',
-        headline: 'Reliance builds a new telecom thesis.',
-        sentiment: 'positive' as const,
-        detail: 'Infrastructure and telecom are both moving into focus.',
-        credibility: 78,
+        newsFeed: [{ id: 'n1', source: 'Reuters', headline: 'Reliance builds a new telecom thesis.', sentiment: 'positive', detail: 'Infrastructure and telecom are both moving into focus.' }]
       },
       {
         id: 'hdfc_bank',
         name: 'HDFC Bank',
         sector: 'Banking',
-        headline: 'Deposits continue compounding.',
-        sentiment: 'positive' as const,
-        detail: 'Branch expansion and credit quality remain strong.',
-        credibility: 81,
+        newsFeed: [{ id: 'n2', source: 'Reuters', headline: 'Deposits continue compounding.', sentiment: 'positive', detail: 'Branch expansion and credit quality remain strong.' }]
       },
       {
         id: 'infosys',
         name: 'Infosys',
         sector: 'IT',
-        headline: 'Hiring plans soften.',
-        sentiment: 'negative' as const,
-        detail: 'Global demand is wobbling, but the balance sheet is strong.',
-        credibility: 69,
+        newsFeed: [{ id: 'n3', source: 'Reuters', headline: 'Hiring plans soften.', sentiment: 'negative', detail: 'Global demand is wobbling, but the balance sheet is strong.' }]
       },
       {
         id: 'yes_bank',
         name: 'Yes Bank',
         sector: 'Banking',
-        headline: 'Growth is accelerating fast.',
-        sentiment: 'positive' as const,
-        detail: 'Momentum is strong, but durability is still debated.',
-        credibility: 62,
+        newsFeed: [{ id: 'n4', source: 'Reuters', headline: 'Growth is accelerating fast.', sentiment: 'positive', detail: 'Momentum is strong, but durability is still debated.' }]
       },
       {
         id: 'byjus',
         name: "Byju's",
         sector: 'EdTech',
-        headline: 'Consumer demand is building.',
-        sentiment: 'neutral' as const,
-        detail: 'Adoption is climbing, though monetization remains young.',
-        credibility: 58,
+        newsFeed: [{ id: 'n5', source: 'Reuters', headline: 'Consumer demand is building.', sentiment: 'neutral', detail: 'Adoption is climbing, though monetization remains young.' }]
       },
       {
         id: 'adani',
         name: 'Adani Group',
         sector: 'Infrastructure',
-        headline: 'Large projects are stacking up.',
-        sentiment: 'positive' as const,
-        detail: 'Execution risk is real, but the opportunity set is large.',
-        credibility: 64,
+        newsFeed: [{ id: 'n6', source: 'Reuters', headline: 'Large projects are stacking up.', sentiment: 'positive', detail: 'Execution risk is real, but the opportunity set is large.' }]
       },
     ] satisfies CompanySignal[],
   }

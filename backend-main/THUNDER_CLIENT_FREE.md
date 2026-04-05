@@ -33,8 +33,8 @@ URL: http://localhost:3000/state
 {
   "phase": "idle",
   "round": 0,
-  "totalRounds": 30,
-  "currentSignal": null,
+  "totalRounds": 6,
+  "currentRound": null,
   "endsAt": null,
   "remainingMs": 0,
   "activeTeamsCount": 0,
@@ -85,8 +85,13 @@ socket.emit('team:join', { teamId: 'team-1', name: 'Team Alpha' }, (response) =>
   console.log('Joined:', response);
 });
 
-// Submit decision
-socket.emit('team:submit', { decision: 'TRADE' }, (response) => {
+// Invest
+socket.emit('team:invest', { companyId: 'reliance', amount: 10000 }, (response) => {
+  console.log('Invested:', response);
+});
+
+// Submit portfolio
+socket.emit('team:submit', {}, (response) => {
   console.log('Submitted:', response);
 });
 ```
@@ -105,10 +110,12 @@ socket.emit('team:submit', { decision: 'TRADE' }, (response) => {
 | `admin:pause-round` | `{}` | Pause round |
 | `admin:resume-round` | `{}` | Resume round |
 | `admin:reset-game` | `{}` | Reset game |
-| `admin:set-score` | `{ "teamId": "...", "score": 100 }` | Override score |
+| `admin:set-purse-value` | `{ "teamId": "...", "value": 100000 }` | Override sequence |
 | `admin:get-audit-log` | `{}` | Get audit log |
 | `team:join` | `{ "teamId": "...", "name": "..." }` | Join as team |
-| `team:submit` | `{ "decision": "TRADE" }` | Submit (TRADE/IGNORE) |
+| `team:invest` | `{ "companyId": "...", "amount": 10000 }` | Invest in company |
+| `team:withdraw` | `{ "companyId": "...", "amount": 10000 }` | Withdraw |
+| `team:submit` | `{}` | Submit portfolio |
 
 ### Server → Client
 
@@ -120,6 +127,7 @@ socket.emit('team:submit', { decision: 'TRADE' }, (response) => {
 | `round:paused` | Round paused |
 | `round:resumed` | Round resumed |
 | `round:submission-status` | Submission confirmation |
+| `investment:updated` | Investment update confirmation |
 | `game:error` | Error notification |
 
 ---
@@ -147,7 +155,8 @@ team.on('game:snapshot', (d) => console.log('Team snapshot:', d));
 team.on('round:started', (d) => console.log('Round:', d));
 team.emit('team:join', { teamId: 'team-1', name: 'Alpha' }, console.log);
 // Wait for game start, then:
-team.emit('team:submit', { decision: 'TRADE' }, console.log);
+team.emit('team:invest', { companyId: 'reliance', amount: 10000 }, console.log);
+team.emit('team:submit', {}, console.log);
 ```
 
 ### Step 4: Admin advances round

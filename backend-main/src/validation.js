@@ -26,10 +26,11 @@ function validateRoundDurationMs(roundDurationMs) {
     throw createError('INVALID_CONFIG', { name: 'ROUND_DURATION_MS', reason: 'Must be an integer.' });
   }
 
-  if (roundDurationMs <= 0 || roundDurationMs > MAX_ROUND_DURATION_MS) {
+  const minDuration = process.env.NODE_ENV === 'test' ? 10 : 5000;
+  if (roundDurationMs < minDuration || roundDurationMs > MAX_ROUND_DURATION_MS) {
     throw createError('INVALID_CONFIG', {
       name: 'ROUND_DURATION_MS',
-      reason: `Must be between 1 and ${MAX_ROUND_DURATION_MS}.`,
+      reason: `Must be between ${minDuration} and ${MAX_ROUND_DURATION_MS}.`,
     });
   }
 
@@ -45,12 +46,19 @@ function loadConfig(env = process.env) {
     parseIntegerEnv(env.ROUND_DURATION_MS, DEFAULT_ROUND_DURATION_MS, 'ROUND_DURATION_MS')
   );
 
+  const dataPath = path.join(__dirname, 'data', 'portfolio-game.json');
+  const data = require(dataPath);
+  const totalRounds = parseIntegerEnv(env.TOTAL_ROUNDS, TOTAL_ROUNDS, 'TOTAL_ROUNDS');
+  if (totalRounds < 1 || totalRounds > data.length) {
+    throw createError('INVALID_CONFIG', { reason: `TOTAL_ROUNDS must be between 1 and ${data.length}` });
+  }
+
   return {
     adminSecret,
     corsOrigins: parseCorsOrigins(env.CORS_ORIGINS),
     port,
     roundDurationMs,
-    totalRounds: TOTAL_ROUNDS,
+    totalRounds,
   };
 }
 
@@ -67,7 +75,7 @@ function validateGameData(data) {
   }
 
   const requiredRoundFields = ['id', 'year', 'title', 'context', 'companies', 'yearlyReturn', 'yearEndReveal'];
-  const requiredCompanyFields = ['id', 'name', 'sector', 'headline', 'detail'];
+  const requiredCompanyFields = ['id', 'name', 'sector', 'newsFeed'];
 
   for (let i = 0; i < data.length; i++) {
     const round = data[i];
@@ -88,6 +96,15 @@ function validateGameData(data) {
       if (!COMPANY_IDS.includes(company.id)) {
         throw createError('INVALID_SIGNAL_DECK', { reason: `Unknown company id: ${company.id}` });
       }
+      
+      if (!Array.isArray(company.newsFeed) || company.newsFeed.length === 0) {
+        throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} must have newsFeed array.` });
+      }
+      for (const news of company.newsFeed) {
+        if (!news.id || !news.headline || !news.detail || !news.source) {
+          throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} has invalid news item.` });
+        }
+      }
     }
 
     for (const companyId of COMPANY_IDS) {
@@ -106,48 +123,11 @@ function loadGameData() {
   return validateGameData(data);
 }
 
-/**
- * Validates a team's allocation submission.
- * Returns the cleaned allocation object or throws.
- */
-function validateAllocation(rawAllocation) {
-  if (!rawAllocation || typeof rawAllocation !== 'object' || Array.isArray(rawAllocation)) {
-    throw createError('INVALID_DECISION', { reason: 'Allocation must be an object.' });
-  }
-
-  let total = 0;
-  const cleaned = {};
-
-  for (const companyId of COMPANY_IDS) {
-    const val = rawAllocation[companyId];
-    const parsed = Number(val ?? 0);
-    if (!Number.isFinite(parsed) || parsed < 0) {
-      throw createError('INVALID_DECISION', { reason: `Invalid value for ${companyId}: must be a non-negative number.` });
-    }
-    cleaned[companyId] = Math.round(parsed);
-    total += cleaned[companyId];
-  }
-
-  if (Math.abs(total - 100) > 1) {
-    throw createError('INVALID_DECISION', { reason: `Allocations must sum to 100. Got ${total}.` });
-  }
-
-  // Normalize to exactly 100 if off by 1 due to rounding
-  if (total !== 100) {
-    const diff = 100 - total;
-    // Add rounding diff to the largest allocation
-    const largest = COMPANY_IDS.reduce((a, b) => (cleaned[a] >= cleaned[b] ? a : b));
-    cleaned[largest] += diff;
-  }
-
-  return cleaned;
-}
 
 module.exports = {
   loadConfig,
   loadGameData,
   parseCorsOrigins,
-  validateAllocation,
   validateGameData,
   validateRoundDurationMs,
 };

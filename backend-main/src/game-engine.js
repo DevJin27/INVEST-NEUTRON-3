@@ -347,6 +347,8 @@ class GameEngine {
     const teamId = this.socketToTeam.get(socketId);
     if (!teamId) throw createError('INVALID_TEAM', { reason: 'Socket not associated with an active team.' });
 
+    if (this.submissions.has(teamId)) throw createError('ALREADY_SUBMITTED', { teamId });
+
     const team = this.teams.get(teamId);
     if (!team || team.socketId !== socketId) throw createError('FORBIDDEN', { reason: 'Socket is not the active controller.' });
 
@@ -383,6 +385,8 @@ class GameEngine {
 
     const teamId = this.socketToTeam.get(socketId);
     if (!teamId) throw createError('INVALID_TEAM', { reason: 'Socket not associated with an active team.' });
+
+    if (this.submissions.has(teamId)) throw createError('ALREADY_SUBMITTED', { teamId });
 
     const team = this.teams.get(teamId);
     if (!team || team.socketId !== socketId) throw createError('FORBIDDEN', { reason: 'Socket is not the active controller.' });
@@ -427,6 +431,9 @@ class GameEngine {
     if (!team || team.socketId !== socketId) throw createError('FORBIDDEN', { reason: 'Socket is not the active controller.' });
 
     if (this.submissions.has(teamId)) throw createError('ALREADY_SUBMITTED', { teamId, round: this.round });
+
+    const totalAllocated = Object.values(team.investments).reduce((s, v) => s + v, 0);
+    if (totalAllocated <= 0) throw createError('INVALID_DECISION', { reason: 'Must invest before submitting.' });
 
     // Freeze current investments as the submission
     this.submissions.set(teamId, { investments: { ...team.investments }, submittedAt: this.now(), socketId });

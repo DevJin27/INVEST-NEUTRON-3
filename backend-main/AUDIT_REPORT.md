@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The Auction Game Server is a real-time WebSocket-based game engine built with Express and Socket.io. It supports up to 10 teams competing in a 30-round trading game where teams must distinguish between ALPHA (profitable) and NOISE (distractor) signals.
+The Auction Game Server is a real-time WebSocket-based game engine built with Express and Socket.io. It supports up to 12 teams competing in a 6-round portfolio investment game based on historical market narratives.
 
 **Overall Status:** ✅ **Ready for Production** with minor fixes applied.
 
@@ -29,7 +29,7 @@ The Auction Game Server is a real-time WebSocket-based game engine built with Ex
 ├─────────────────────────────────────────────────────────────┤
 │                    Game Engine (In-Memory)                     │
 │  ├── Team Management │  ├── Round Timer                    │
-│  ├── Score Tracking  │  ├── Signal Deck (30 signals)         │
+│  ├── Score Tracking  │  ├── Historical Narratives          │
 │  └── State Machine   │  └── Submission Evaluation          │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -94,11 +94,9 @@ The Auction Game Server is a real-time WebSocket-based game engine built with Ex
    - No recovery mechanism for crashes
    - **Impact:** Medium - acceptable for single-session games
 
-2. **Hardcoded Scoring Values**
-   - Missed ALPHA penalty: -100
-   - Correct NOISE bonus: +100
-   - False trade penalty: -65% of signal value
-   - **Location:** `src/scoring.js`
+2. **Hardcoded Initial Purse**
+   - STARTING_PURSE_VALUE is strictly coded to 100000
+   - **Location:** `src/constants.js`
    - **Impact:** Low - business logic is fixed per game design
 
 3. **Limited Observability**
@@ -134,15 +132,17 @@ The Auction Game Server is a real-time WebSocket-based game engine built with Ex
 | `admin:pause-round` | Yes | Yes | ✅ Good | Validates live phase |
 | `admin:resume-round` | Yes | Yes | ✅ Good | Validates paused phase |
 | `admin:reset-game` | Yes | Yes | ✅ Good | Resets to idle, preserves teams |
-| `admin:set-score` | Yes | Yes | ✅ Good | Validates numeric score |
+| `admin:set-purse-value` | Yes | Yes | ✅ Good | Validates numeric purse |
 | `admin:get-audit-log` | Yes | Yes | ✅ Good | Returns last 200 actions |
 
 ### WebSocket Events - Teams
 
 | Event | Auth | Status | Notes |
 |-------|------|--------|-------|
-| `team:join` | No | ✅ Good | Max 10 teams, socket replacement works |
-| `team:submit` | No | ✅ Good | Validates TRADE/IGNORE, checks deadlines |
+| `team:join` | No | ✅ Good | Max 12 teams, socket replacement works |
+| `team:submit` | No | ✅ Good | Validates investments, checks deadlines |
+| `team:invest` | No | ✅ Good | Validates purse availability |
+| `team:withdraw` | No | ✅ Good | Validates invested amount |
 
 ### Server Broadcasts
 
@@ -154,37 +154,32 @@ The Auction Game Server is a real-time WebSocket-based game engine built with Ex
 | `round:paused` | Pause | ✅ Good |
 | `round:resumed` | Resume | ✅ Good |
 | `round:submission-status` | Team submission | ✅ Good |
+| `investment:updated` | Investment update | ✅ Good |
 | `game:error` | Errors/shutdown | ✅ Good |
 
 ---
 
 ## Game Logic Audit
 
-### Signal Deck
-- **Count:** 30 signals (15 ALPHA, 15 NOISE) ✅
+### Narrative Data
+- **Count:** 6 historical narrative rounds ✅
 - **Validation:** Full schema validation in `validation.js` ✅
-- **Shuffling:** Fisher-Yates shuffle implemented correctly ✅
-- **Distribution:** Exactly 50/50 enforced ✅
 
 ### Round Timer
-- **Duration:** Configurable (default 10s) ✅
-- **Grace Window:** 100ms after round ends ✅
+- **Duration:** Configurable ✅
+- **Grace Window:** 200ms after round ends ✅
 - **Pause/Resume:** Correctly preserves remaining time ✅
 - **Auto-close:** Timer arms correctly on round start ✅
 
 ### Scoring Logic
-- **ALPHA + TRADE:** +signal.value ✅
-- **ALPHA + IGNORE:** -100 ✅
-- **NOISE + IGNORE:** +100 ✅
-- **NOISE + TRADE:** -65% of signal.value ✅
-- **No response on ALPHA:** -100 (missed) ✅
-- **No response on NOISE:** 0 (neutral) ✅
+- **Historical Returns:** Returns are dynamically calculated based on the year's specific historical context. ✅
+- **Breakdown:** Returns correctly scale per investment percent allocation. ✅
 
 ### State Machine
 ```
 IDLE → (start-game) → LIVE → (timer/close) → RESULTS → (next-round) → LIVE
   ↑                      ↓                                    ↓
-  └──── (reset-game) ────┴────────────── (finish 30 rounds) ─┴──→ FINISHED
+  └──── (reset-game) ────┴─────────────── (finish 6 rounds) ──┴──→ FINISHED
 ```
 
 All state transitions properly validated ✅
@@ -215,25 +210,25 @@ All state transitions properly validated ✅
 ### Data Validation
 - All inputs validated before processing ✅
 - Type coercion and sanitization applied ✅
-- Signal deck validated on load ✅
+- Portfolio data validated on load ✅
 
 ---
 
 ## Performance Analysis
 
 ### Scalability Limits
-- **Max Teams:** 10 (hard limit)
+- **Max Teams:** 12 (hard limit)
 - **Concurrent Connections:** Limited by Node.js event loop
 - **Memory Usage:** O(teams + rounds) - very low
 - **CPU Usage:** Minimal - mainly timer management
 
 ### Bottlenecks
 1. **State Lock:** All game mutations are serialized through `withStateLock`
-   - Acceptable for expected load (10 teams)
+   - Acceptable for expected load (12 teams)
    - Prevents race conditions
 
 2. **Broadcasts:** All socket broadcasts are O(n) where n = connected clients
-   - 10 teams + spectators = negligible overhead
+   - 12 teams + spectators = negligible overhead
 
 ### Recommendations
 - Server can handle 100+ concurrent spectators easily
@@ -283,7 +278,8 @@ npm test
 3. Authenticate as admin: `admin:authenticate` with `{ "secret": "..." }`
 4. Start game: `admin:start-game`
 5. Join as team from another client: `team:join`
-6. Submit decisions: `team:submit`
+6. Invest capital: `team:invest`
+7. Submit investments: `team:submit`
 
 ---
 
@@ -293,7 +289,7 @@ The Auction Game Server is **architecturally sound and production-ready** with t
 
 - **Reliability:** High - robust error handling, proper state management
 - **Security:** Good - auth, rate limiting, input validation
-- **Performance:** Excellent for intended load (10 teams)
+- **Performance:** Excellent for intended load (12 teams)
 - **Maintainability:** Good - clean code structure, comprehensive tests
 - **Scalability:** Adequate - single-instance design is appropriate
 
@@ -309,16 +305,16 @@ The system is ready for deployment to Render or similar Node.js hosting. The gam
 backend-main/
 ├── .env                          # Environment variables (SECURED)
 ├── .gitignore                    # Standard Node.js ignores
-├── DEPLOYMENT.md                 # Deployment guide (NEW)
+├── DEPLOYMENT.md                 # Deployment guide
 ├── README.md                     # Project documentation
-├── package.json                  # Dependencies + scripts (FIXED)
-├── render.yaml                   # Render.com config (NEW)
-├── thunder-collection.json       # API testing collection (NEW)
+├── package.json                  # Dependencies + scripts
+├── render.yaml                   # Render.com config
+├── thunder-collection.json       # API testing collection
 ├── src/
 │   ├── audit-log.js              # Admin action logging
 │   ├── constants.js              # Game constants
 │   ├── data/
-│   │   └── signals.json          # 30 game signals
+│   │   └── portfolio-game.json   # 6-round narrative deck
 │   ├── errors.js                 # Error handling
 │   ├── game-engine.js            # Core game logic
 │   ├── index.js                  # Entry point
@@ -343,8 +339,8 @@ backend-main/
 | `PORT` | No | 3000 | Server port |
 | `ADMIN_SECRET` | **Yes** | - | Admin auth key (CHANGE THIS!) |
 | `CORS_ORIGINS` | No | * | Allowed origins |
-| `ROUND_DURATION_MS` | No | 10000 | Round duration |
-| `TOTAL_ROUNDS` | No | 30 | Total rounds |
+| `ROUND_DURATION_MS` | No | 60000 | Round duration |
+| `TOTAL_ROUNDS` | No | 6 | Total rounds |
 
 ---
 
