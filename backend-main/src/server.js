@@ -44,12 +44,13 @@ function createRealtimeGameServer(options = {}) {
   const app = express();
   const httpServer = http.createServer(app);
   const io = new Server(httpServer, {
-    allowUpgrades: false,
-    cors: { credentials: true, origin: buildCorsOriginChecker(config.corsOrigins) },
+    // Allow polling so the HTTP upgrade handshake works (needed for Render cold-starts)
+    // and so Socket.io can negotiate the WebSocket upgrade properly.
+    cors: { origin: buildCorsOriginChecker(config.corsOrigins) },
     httpCompression: false,
     perMessageDeflate: false,
     serveClient: false,
-    transports: ['websocket'],
+    transports: ['polling', 'websocket'],
   });
 
   let listening = false;
@@ -57,7 +58,8 @@ function createRealtimeGameServer(options = {}) {
   let shutdownPromise = null;
   const serverStartedAt = Date.now();
 
-  app.use(cors({ credentials: true, origin: buildCorsOriginChecker(config.corsOrigins) }));
+  // credentials: true is incompatible with wildcard CORS origins (browser rejects it).
+  app.use(cors({ origin: buildCorsOriginChecker(config.corsOrigins) }));
   app.use(express.json());
 
   app.get('/health', (_req, res) => {
