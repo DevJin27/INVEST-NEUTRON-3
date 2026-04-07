@@ -104,6 +104,13 @@ function validateGameData(data) {
         if (!news.id || !news.headline || !news.detail || !news.source) {
           throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} has invalid news item.` });
         }
+        const validSourceTypes = ['verified_press', 'social_rumor', 'sponsored_content', 'analyst_note'];
+        if (!validSourceTypes.includes(news.sourceType)) {
+          throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} news item ${news.id} has invalid sourceType.` });
+        }
+        if (typeof news.credibilityScore !== 'number' || news.credibilityScore < 0 || news.credibilityScore > 100) {
+          throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} news item ${news.id} has invalid credibilityScore.` });
+        }
       }
     }
 

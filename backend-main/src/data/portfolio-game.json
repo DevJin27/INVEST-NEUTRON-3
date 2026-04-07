@@ -16,21 +16,27 @@
             "source": "Economic Times",
             "headline": "RIL acquires spectrum — Mukesh bets on a 4G future",
             "detail": "RIL quietly files for spectrum licenses. Insiders whisper about a project to disrupt Indian telecom. Oil-to-chemicals remains the cash cow that funds the ambition.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 73
           },
           {
             "id": "reliance-news-2",
             "source": "Unverified Rumor",
             "headline": "Leaked docs show Reliance Industries about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 10
           },
           {
             "id": "reliance-news-3",
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Reliance Industries Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 8
           }
         ]
       },
@@ -44,21 +50,27 @@
             "source": "Promoted Content",
             "headline": "Top 3 Reasons to LOAD UP on HDFC Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 9
           },
           {
             "id": "hdfc_bank-news-1",
             "source": "Economic Times",
             "headline": "HDFC Bank beats estimates — announces aggressive branch expansion",
             "detail": "PAT up 30% YoY. Tier-2/3 city expansion strategy gaining traction. NPA levels at industry-best 0.9%. Management quality unmatched in Indian banking.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 77
           },
           {
             "id": "hdfc_bank-news-2",
             "source": "WhatsApp Forward",
             "headline": "HDFC Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at HDFC Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 14
           }
         ]
       },
@@ -72,21 +84,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Infosys Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 12
           },
           {
             "id": "infosys-news-2",
             "source": "Anonymous Blog",
             "headline": "Leaked docs show Infosys about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 16
           },
           {
             "id": "infosys-news-1",
             "source": "Mint",
             "headline": "Infosys cuts guidance — visa issues and leadership drift",
             "detail": "Revenue growth guidance cut to 8-10%. US visa headwinds. Founder Narayana Murthy quietly critical of direction. But a massive cash pile offers comfort.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "verified_press",
+            "credibilityScore": 81
           }
         ]
       },
@@ -100,21 +118,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Yes Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 15
           },
           {
             "id": "yes_bank-news-1",
             "source": "Financial Times",
             "headline": "Yes Bank posts 35% profit growth — Rana Kapoor's machine hums",
             "detail": "Corporate loan book expanding at breakneck speed. Analysts bullish. Margins stellar. Some ask: is the loan quality too good to be true?",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 83
           },
           {
             "id": "yes_bank-news-2",
             "source": "Unverified Rumor",
             "headline": "Yes Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Yes Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 20
           }
         ]
       },
@@ -128,21 +152,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Byju's Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 18
           },
           {
             "id": "byjus-news-2",
             "source": "Anonymous Blog",
             "headline": "Byju's facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Byju's.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 22
           },
           {
             "id": "byjus-news-1",
             "source": "Financial Times",
             "headline": "Think & Learn raises Series A — bets on online education",
             "detail": "Byju Raveendran's CAT coaching brand goes digital. Sequoia leads funding at $50M valuation. EdTech is completely uncharted territory in India.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 87
           }
         ]
       },
@@ -156,21 +186,27 @@
             "source": "Unverified Rumor",
             "headline": "Leaked docs show Adani Enterprises about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 24
           },
           {
             "id": "adani-news-1",
             "source": "Bloomberg",
             "headline": "Adani wins Mundra port expansion — infrastructure empire grows",
             "detail": "Government infrastructure push directly benefits Adani. Coal imports rising. Power generation capacity additions announced. Political tailwinds are strong.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 89
           },
           {
             "id": "adani-news-3",
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Adani Enterprises Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 7
           }
         ]
       }
@@ -209,21 +245,27 @@
             "source": "Anonymous Blog",
             "headline": "Reliance Industries facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Reliance Industries.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 27
           },
           {
             "id": "reliance-news-1",
             "source": "Wall Street Journal",
             "headline": "Jio beta testers report free data at blazing speeds — launch imminent",
             "detail": "If Jio launches publicly with free data, every telecom operator is in existential trouble. RIL shares are muted but savvy investors are positioning aggressively.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 92
           },
           {
             "id": "reliance-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Reliance Industries Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 10
           }
         ]
       },
@@ -237,21 +279,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on HDFC Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 11
           },
           {
             "id": "hdfc_bank-news-1",
             "source": "Mint",
             "headline": "HDFC Bank wins 'Most Trusted Bank' for 7th consecutive year",
             "detail": "Digital transformation well underway. Mobile app transactions surge 200%. Management quality remains best-in-class. No surprises — which is exactly the point.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 74
           },
           {
             "id": "hdfc_bank-news-2",
             "source": "Twitter / X",
             "headline": "HDFC Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at HDFC Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 9
           }
         ]
       },
@@ -265,21 +313,27 @@
             "source": "WhatsApp Forward",
             "headline": "Leaked docs show Infosys about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 10
           },
           {
             "id": "infosys-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Infosys Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 15
           },
           {
             "id": "infosys-news-1",
             "source": "Financial Times",
             "headline": "Narayana Murthy returns, triggers leadership shake-up",
             "detail": "Founder's intervention creates short-term uncertainty. But talent pipeline strong and global demand for IT services is accelerating. Is this chaos or necessary reform?",
-            "sentiment": "neutral"
+            "sentiment": "neutral",
+            "sourceType": "verified_press",
+            "credibilityScore": 78
           }
         ]
       },
@@ -293,21 +347,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Yes Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 17
           },
           {
             "id": "yes_bank-news-2",
             "source": "WhatsApp Forward",
             "headline": "Yes Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Yes Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 14
           },
           {
             "id": "yes_bank-news-1",
             "source": "Reuters",
             "headline": "Yes Bank hits all-time high — but RBI sends first warning letter",
             "detail": "Profits up massively. NPA data still looks clean. But an RBI inspection flags irregularities. Management dismisses it publicly. Institutional investors are quietly watching.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 81
           }
         ]
       },
@@ -321,21 +381,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Byju's Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 20
           },
           {
             "id": "byjus-news-1",
             "source": "Reuters",
             "headline": "Byju's raises $75M from Sequoia, DST — now valued at $500M",
             "detail": "10 million registered students. Mark Zuckerberg publicly praises Byju's. App downloads exploding. Loss-making but growth metrics are extraordinary. The story is just beginning.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 83
           },
           {
             "id": "byjus-news-2",
             "source": "Anonymous Blog",
             "headline": "Byju's facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Byju's.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 18
           }
         ]
       },
@@ -349,21 +415,27 @@
             "source": "Bloomberg",
             "headline": "Adani wins bid for 6 airports — government accelerates privatisation",
             "detail": "Adani Group becomes the go-to infrastructure partner for the government. Coal, ports, power, now airports. Leverage rising sharply but so is scale.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 85
           },
           {
             "id": "adani-news-2",
             "source": "Twitter / X",
             "headline": "Leaked docs show Adani Enterprises about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 20
           },
           {
             "id": "adani-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Adani Enterprises Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 9
           }
         ]
       }
@@ -402,21 +474,27 @@
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Reliance Industries Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 10
           },
           {
             "id": "reliance-news-2",
             "source": "Unverified Rumor",
             "headline": "Reliance Industries facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Reliance Industries.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 23
           },
           {
             "id": "reliance-news-1",
             "source": "Financial Times",
             "headline": "Jio hits 215M subscribers — competitors bleeding billions",
             "detail": "Airtel and Vodafone-Idea losing billions. Jio is the only winner in telecom. JioFiber launches for home broadband. Reliance Retail posts 100% YoY growth. A three-sector giant is emerging.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 90
           }
         ]
       },
@@ -430,21 +508,27 @@
             "source": "Anonymous Blog",
             "headline": "HDFC Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at HDFC Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 25
           },
           {
             "id": "hdfc_bank-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on HDFC Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 14
           },
           {
             "id": "hdfc_bank-news-1",
             "source": "Financial Times",
             "headline": "HDFC Bank in merger talks with parent HDFC Ltd",
             "detail": "A mega-merger would create one of Asia's largest financial institutions. Execution risk exists but strategic rationale is sound. Short-term disruption, long-term value creation.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 72
           }
         ]
       },
@@ -458,21 +542,27 @@
             "source": "Bloomberg",
             "headline": "CEO Vishal Sikka resigns amid boardroom feud — founder vs management",
             "detail": "Murthy's public war with management erupts. Client confidence wobbles briefly. But the order book remains massive. Is this a storm in a teacup or structural rot?",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "verified_press",
+            "credibilityScore": 73
           },
           {
             "id": "infosys-news-2",
             "source": "Twitter / X",
             "headline": "Leaked docs show Infosys about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 29
           },
           {
             "id": "infosys-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Infosys Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 18
           }
         ]
       },
@@ -486,21 +576,27 @@
             "source": "Promoted Content",
             "headline": "Top 3 Reasons to LOAD UP on Yes Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 19
           },
           {
             "id": "yes_bank-news-2",
             "source": "WhatsApp Forward",
             "headline": "Yes Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Yes Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 9
           },
           {
             "id": "yes_bank-news-1",
             "source": "Economic Times",
             "headline": "RBI rejects Yes Bank's CEO extension — ALARM BELLS RINGING",
             "detail": "Rana Kapoor forced out. New CEO inherits a mess. NPAs now emerging officially. Shares falling sharply. Institutional investors quietly exiting. This could be very bad.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "verified_press",
+            "credibilityScore": 78
           }
         ]
       },
@@ -514,21 +610,27 @@
             "source": "Anonymous Blog",
             "headline": "Byju's facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Byju's.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 11
           },
           {
             "id": "byjus-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Byju's Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 7
           },
           {
             "id": "byjus-news-1",
             "source": "Financial Times",
             "headline": "Byju's hits unicorn status — Tencent and Chan-Zuckerberg invest",
             "detail": "Valuation: $1 Billion. 20M students on platform. COVID hasn't happened yet but Byju's is already the undisputed EdTech leader. International expansion begins.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 81
           }
         ]
       },
@@ -542,21 +644,27 @@
             "source": "Economic Times",
             "headline": "Adani Power wins massive government tender — but debt mounts",
             "detail": "Solar and thermal capacity both expanding aggressively. Coal imports profitable. But group-level debt is rising at an alarming rate. Is the collateral solid?",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 82
           },
           {
             "id": "adani-news-2",
             "source": "Anonymous Blog",
             "headline": "Adani Enterprises facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Adani Enterprises.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 15
           },
           {
             "id": "adani-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Adani Enterprises Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 11
           }
         ]
       }
@@ -595,21 +703,27 @@
             "source": "Economic Times",
             "headline": "Facebook invests $5.7B in Jio — Google follows with $4.5B",
             "detail": "Rights issue raises ₹53,000 crore. Reliance becomes net-debt free. Jio positioned as India's digital infrastructure backbone. Retail arm becomes India's largest retailer.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 85
           },
           {
             "id": "reliance-news-2",
             "source": "WhatsApp Forward",
             "headline": "Leaked docs show Reliance Industries about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 18
           },
           {
             "id": "reliance-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Reliance Industries Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 14
           }
         ]
       },
@@ -623,21 +737,27 @@
             "source": "Financial Times",
             "headline": "HDFC Bank: digital transactions triple — but NPA outlook uncertain",
             "detail": "COVID moratorium masks true NPA levels. Digital banking surges 300%. But real estate exposure and SME loans create anxiety. Dividend cut to conserve capital.",
-            "sentiment": "neutral"
+            "sentiment": "neutral",
+            "sourceType": "verified_press",
+            "credibilityScore": 88
           },
           {
             "id": "hdfc_bank-news-2",
             "source": "Unverified Rumor",
             "headline": "HDFC Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at HDFC Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 21
           },
           {
             "id": "hdfc_bank-news-3",
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on HDFC Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 17
           }
         ]
       },
@@ -651,21 +771,27 @@
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Infosys Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 18
           },
           {
             "id": "infosys-news-2",
             "source": "Twitter / X",
             "headline": "Infosys facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Infosys.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 24
           },
           {
             "id": "infosys-news-1",
             "source": "Economic Times",
             "headline": "Infosys wins $1.5B ABN AMRO deal — WFH validates IT outsourcing",
             "detail": "Remote work proves IT outsourcing is more durable than sceptics believed. Large deal wins accelerating globally. Revenue guidance upgraded to 12-14% for FY21.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 72
           }
         ]
       },
@@ -679,21 +805,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Yes Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 5
           },
           {
             "id": "yes_bank-news-1",
             "source": "Financial Times",
             "headline": "YES BANK COLLAPSES — RBI takes control, deposits frozen at ₹50,000",
             "detail": "CATASTROPHIC. Rana Kapoor arrested. SBI forced to rescue. Shareholders suffered near-total losses. Stock at ₹3. A cautionary tale for the ages.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "verified_press",
+            "credibilityScore": 74
           },
           {
             "id": "yes_bank-news-2",
             "source": "Twitter / X",
             "headline": "Leaked docs show Yes Bank about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 28
           }
         ]
       },
@@ -707,21 +839,27 @@
             "source": "Wall Street Journal",
             "headline": "Schools close globally — Byju's adds 45 million users in 3 months",
             "detail": "COVID is Byju's growth hormone. Valuation hits $10.5 BILLION. BlackRock and Tiger Global invest. Annual revenue: ₹2,800 crore. The world has never seen EdTech demand like this.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 76
           },
           {
             "id": "byjus-news-2",
             "source": "Twitter / X",
             "headline": "Leaked docs show Byju's about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 30
           },
           {
             "id": "byjus-news-3",
             "source": "Promoted Content",
             "headline": "Top 3 Reasons to LOAD UP on Byju's Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 10
           }
         ]
       },
@@ -735,21 +873,27 @@
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Adani Enterprises Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 11
           },
           {
             "id": "adani-news-1",
             "source": "Economic Times",
             "headline": "Adani Green wins world's largest solar tender — 8 GW",
             "detail": "Government's green energy push perfectly timed. Solar portfolio exploding. Adani group stocks doubling. Coal remains profitable despite ESG pressure.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 80
           },
           {
             "id": "adani-news-2",
             "source": "Twitter / X",
             "headline": "Leaked docs show Adani Enterprises about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 11
           }
         ]
       }
@@ -788,21 +932,27 @@
             "source": "Promoted Content",
             "headline": "Top 3 Reasons to LOAD UP on Reliance Industries Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 14
           },
           {
             "id": "reliance-news-2",
             "source": "Twitter / X",
             "headline": "Leaked docs show Reliance Industries about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 13
           },
           {
             "id": "reliance-news-1",
             "source": "Financial Times",
             "headline": "Reliance Retail IPO imminent — $100B valuation expected",
             "detail": "India's most anticipated IPO. Jio IPO also in pipeline. Combined these subsidiaries could be worth $250B. RIL parent is the ultimate pre-IPO play.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 84
           }
         ]
       },
@@ -816,21 +966,27 @@
             "source": "Twitter / X",
             "headline": "HDFC Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at HDFC Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 15
           },
           {
             "id": "hdfc_bank-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on HDFC Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 18
           },
           {
             "id": "hdfc_bank-news-1",
             "source": "Reuters",
             "headline": "HDFC-HDFC Bank merger finalised — integration challenges loom",
             "detail": "The merger of the decade closes. But stock underperforms as integration costs bite. Priority sector lending requirements create short-term headwinds. Patience required.",
-            "sentiment": "neutral"
+            "sentiment": "neutral",
+            "sourceType": "verified_press",
+            "credibilityScore": 87
           }
         ]
       },
@@ -844,21 +1000,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Infosys Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 20
           },
           {
             "id": "infosys-news-1",
             "source": "Mint",
             "headline": "Infosys posts record revenue — AI transition accelerating",
             "detail": "Revenue touches $16B. Buybacks boost EPS. Cloud and AI deals multiplying. Attrition at 27% is the main concern — retaining talent is expensive in this market.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 89
           },
           {
             "id": "infosys-news-2",
             "source": "Twitter / X",
             "headline": "Infosys facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Infosys.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 20
           }
         ]
       },
@@ -872,21 +1034,27 @@
             "source": "Financial Times",
             "headline": "Yes Bank raises ₹8,900 crore in FPO — slow recovery begins",
             "detail": "Prashant Kumar's turnaround is painfully slow. NPAs still elevated. Capital adequacy restored but profitability is distant. A speculative bet on redemption.",
-            "sentiment": "neutral"
+            "sentiment": "neutral",
+            "sourceType": "verified_press",
+            "credibilityScore": 91
           },
           {
             "id": "yes_bank-news-2",
             "source": "Unverified Rumor",
             "headline": "Yes Bank facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Yes Bank.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 22
           },
           {
             "id": "yes_bank-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Yes Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 9
           }
         ]
       },
@@ -900,21 +1068,27 @@
             "source": "Economic Times",
             "headline": "Byju's acquires Aakash, WhiteHat Jr, Toppr — but losses explode to ₹4,500 crore",
             "detail": "Valuation peaks at $22 Billion. But auditor flags concerns. Employees report unpaid salaries. Governance questions mount publicly. Is the emperor wearing clothes?",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "verified_press",
+            "credibilityScore": 73
           },
           {
             "id": "byjus-news-2",
             "source": "Unverified Rumor",
             "headline": "Byju's facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Byju's.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 25
           },
           {
             "id": "byjus-news-3",
             "source": "Promoted Content",
             "headline": "Top 3 Reasons to LOAD UP on Byju's Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 12
           }
         ]
       },
@@ -928,21 +1102,27 @@
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Adani Enterprises Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 13
           },
           {
             "id": "adani-news-2",
             "source": "Anonymous Blog",
             "headline": "Adani Enterprises facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Adani Enterprises.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 28
           },
           {
             "id": "adani-news-1",
             "source": "Mint",
             "headline": "Gautam Adani becomes world's 3rd richest person — stocks up 1000%",
             "detail": "Adani Total Gas +900%. Adani Green +700%. Adani Enterprises +400% in 24 months. Hindenburg Research is quietly loading their report...",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 78
           }
         ]
       }
@@ -981,21 +1161,27 @@
             "source": "Reuters",
             "headline": "Jio files for IPO — $100B+ valuation; Mukesh hands reins to next generation",
             "detail": "The patriarch passes the baton. Jio IPO could be India's largest ever listing. Green energy investments gaining serious scale. The Reliance story continues into its next chapter.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 79
           },
           {
             "id": "reliance-news-2",
             "source": "WhatsApp Forward",
             "headline": "Leaked docs show Reliance Industries about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 8
           },
           {
             "id": "reliance-news-3",
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Reliance Industries Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 18
           }
         ]
       },
@@ -1009,21 +1195,27 @@
             "source": "Promoted Content",
             "headline": "Top 3 Reasons to LOAD UP on HDFC Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 19
           },
           {
             "id": "hdfc_bank-news-2",
             "source": "Anonymous Blog",
             "headline": "Leaked docs show HDFC Bank about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 11
           },
           {
             "id": "hdfc_bank-news-1",
             "source": "Mint",
             "headline": "HDFC Bank merger integration complete — growth reaccelerates",
             "detail": "Post-merger integration blues are behind. Loan growth accelerates to 15%+. Digital banking leadership intact. Premium valuation versus history remains justified.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 84
           }
         ]
       },
@@ -1037,21 +1229,27 @@
             "source": "WhatsApp Forward",
             "headline": "Infosys facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Infosys.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 13
           },
           {
             "id": "infosys-news-1",
             "source": "Reuters",
             "headline": "Infosys AI-first strategy — wins $2B deal from global bank",
             "detail": "AI transformation is Infosys's next chapter. Deal pipeline at record levels. Dividend payout consistent. The boring compounder keeps compounding through every cycle.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "verified_press",
+            "credibilityScore": 86
           },
           {
             "id": "infosys-news-3",
             "source": "Promoted Content",
             "headline": "Top 3 Reasons to LOAD UP on Infosys Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 8
           }
         ]
       },
@@ -1065,21 +1263,27 @@
             "source": "Mint",
             "headline": "Yes Bank posts first profit in 4 years — stock still at ₹20",
             "detail": "Operational turnaround finally visible under the numbers. But shareholder wealth destruction has been near total. Recovery will take many years. Patience and stomach required.",
-            "sentiment": "neutral"
+            "sentiment": "neutral",
+            "sourceType": "verified_press",
+            "credibilityScore": 88
           },
           {
             "id": "yes_bank-news-3",
             "source": "Sponsored Post",
             "headline": "Top 3 Reasons to LOAD UP on Yes Bank Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 10
           },
           {
             "id": "yes_bank-news-2",
             "source": "Anonymous Blog",
             "headline": "Leaked docs show Yes Bank about to acquire major competitor!",
             "detail": "Unconfirmed screenshots indicate a massive buyout is imminent. Analysts say this could double the stock.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "social_rumor",
+            "credibilityScore": 18
           }
         ]
       },
@@ -1093,21 +1297,27 @@
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Byju's Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 12
           },
           {
             "id": "byjus-news-2",
             "source": "Unverified Rumor",
             "headline": "Byju's facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Byju's.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 20
           },
           {
             "id": "byjus-news-1",
             "source": "Mint",
             "headline": "BYJU'S INSOLVENT — NCLT admits insolvency petition, offices seized",
             "detail": "India's most spectacular startup collapse. $22B valuation → ZERO. Employees unpaid for months. BCCI demands return of jersey money. Byju Raveendran accused of fund diversion. Complete wipeout.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "verified_press",
+            "credibilityScore": 72
           }
         ]
       },
@@ -1121,21 +1331,27 @@
             "source": "Mint",
             "headline": "Adani -60% from peak after Hindenburg attack — partial recovery begins",
             "detail": "The Hindenburg report erases ₹10 lakh crore. Adani scrambles to repay loans. GQG Partners invests $1.9B, providing lifeline. Some recovery since, but the credibility damage lingers.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "verified_press",
+            "credibilityScore": 73
           },
           {
             "id": "adani-news-2",
             "source": "Anonymous Blog",
             "headline": "Adani Enterprises facing undisclosed SEC investigation?",
             "detail": "A forward circulating in trader groups suggests massive accounting irregularities at Adani Enterprises.",
-            "sentiment": "negative"
+            "sentiment": "negative",
+            "sourceType": "social_rumor",
+            "credibilityScore": 23
           },
           {
             "id": "adani-news-3",
             "source": "Paid Placement: Acme Wealth",
             "headline": "Top 3 Reasons to LOAD UP on Adani Enterprises Now",
             "detail": "Our proprietary algorithm screams BUY. Don't miss out on what could be the trade of the decade. Click here for full access.",
-            "sentiment": "positive"
+            "sentiment": "positive",
+            "sourceType": "sponsored_content",
+            "credibilityScore": 17
           }
         ]
       }

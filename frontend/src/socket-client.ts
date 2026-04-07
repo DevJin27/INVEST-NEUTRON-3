@@ -7,6 +7,9 @@ export function createSocketClient(): SocketLike {
   return io(socketUrl, {
     autoConnect: true,
     reconnection: true,
-    transports: ['websocket'],
+    // Allow polling first so Socket.io can complete the HTTP upgrade handshake
+    // even when the Render server is cold-starting. It will automatically
+    // upgrade to WebSocket once the connection is established.
+    transports: ['polling', 'websocket'],
   })
 }

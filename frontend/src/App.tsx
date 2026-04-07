@@ -1,6 +1,7 @@
-import { type CSSProperties, type FormEvent, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import AdminApp from './AdminApp'
+import { pickHint } from './hints'
 import { createSocketClient } from './socket-client'
 import type {
   AckResponse,
@@ -19,6 +20,7 @@ import type {
 import { COMPANY_IDS } from './types'
 import {
   blankInvestments,
+  computeRiskScore,
   formatCompactCurrency,
   formatCountdown,
   formatCurrency,
@@ -28,6 +30,7 @@ import {
   getCountdownMs,
   getInvestmentPercentage,
   getQuickInvestAmounts,
+  getRiskZone,
   getRoundSummary,
   hasInvestments,
   sentimentColor,
@@ -53,6 +56,88 @@ const EMPTY_SUBMISSION: ViewerSubmission = {
   hasSubmitted: false,
   investments: blankInvestments(),
   canSubmit: false,
+}
+
+const THEMES = [
+  { id: '', label: '🌑 Default' },
+  { id: 'neon-growth', label: '🟢 Neon' },
+  { id: 'crimson-risk', label: '🔴 Crimson' },
+  { id: 'navy-stability', label: '🔵 Navy' },
+] as const
+
+// ─── Source type credibility bar colours ───────────────────────────────────
+function sourceTypeColor(st: CompanySignal['newsFeed'][number]['sourceType']): string {
+  switch (st) {
+    case 'verified_press':   return 'var(--positive-strong)'
+    case 'analyst_note':     return 'var(--accent-light)'
+    case 'social_rumor':     return 'var(--negative-strong)'
+    case 'sponsored_content':return '#a87700'
+  }
+}
+
+function sourceTypeLabel(st: CompanySignal['newsFeed'][number]['sourceType']): string {
+  switch (st) {
+    case 'verified_press':   return 'PRESS'
+    case 'analyst_note':     return 'ANALYST'
+    case 'social_rumor':     return 'RUMOR'
+    case 'sponsored_content':return 'AD'
+  }
+}
+
+// ─── Toast system ──────────────────────────────────────────────────────────
+type Toast = { id: number; text: string }
+
+function useToasts() {
+  const [toasts, setToasts] = useState<Toast[]>([])
+  const counterRef = useRef(0)
+
+  const addToast = useCallback((text: string) => {
+    const id = ++counterRef.current
+    setToasts((prev) => [...prev.slice(-1), { id, text }]) // max 2 visible
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 4000)
+  }, [])
+
+  return { toasts, addToast }
+}
+
+function ToastStack({ toasts }: { toasts: Toast[] }) {
+  if (toasts.length === 0) return null
+  return (
+    <div className="toast-stack" aria-live="polite">
+      {toasts.map((t) => (
+        <div key={t.id} className="toast-item">{t.text}</div>
+      ))}
+    </div>
+  )
+}
+
+// ─── Riskometer ────────────────────────────────────────────────────────────
+function Riskometer({ score }: { score: number }) {
+  const zone = getRiskZone(score)
+  const labels = [
+    { zone: 'conservative', label: 'Conservative', color: 'var(--positive-strong)' },
+    { zone: 'bold', label: 'Bold', color: 'var(--warning, #f59e0b)' },
+    { zone: 'reckless', label: 'Reckless', color: 'var(--negative-strong)' },
+  ] as const
+
+  return (
+    <div className="riskometer-wrap">
+      <span className="mini-label">Portfolio Confidence</span>
+      <div className="riskometer-track" role="meter" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
+        <div className="riskometer-fill" style={{ width: `${score}%`, background: zone === 'conservative' ? 'var(--positive-strong)' : zone === 'bold' ? 'var(--warning, #f59e0b)' : 'var(--negative-strong)' }} />
+        <div className="riskometer-indicator" style={{ left: `${score}%` }} />
+      </div>
+      <div className="riskometer-zones">
+        {labels.map(({ zone: z, label, color }) => (
+          <span key={z} className={`risk-zone-label ${z === zone ? 'active' : ''}`} style={z === zone ? { color } : undefined}>
+            {label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function getModeFromHash(hash: string): ShellMode {
@@ -150,24 +235,28 @@ function InvestmentCard({
         </div>
       </div>
 
-      <div className="news-feed-container" style={{ margin: '16px 0', display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '200px', overflowY: 'auto', paddingRight: '8px' }}>
-        {signal.newsFeed.map((news) => {
-          const isSponsored = news.source.includes('Promoted') || news.source.includes('Sponsored') || news.source.includes('Paid');
-          return (
-            <div key={news.id} className="news-item" style={{ padding: '12px', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-soft)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', color: isSponsored ? 'var(--accent-strong)' : 'var(--mono)' }}>
-                  {news.source}
+      <div className="news-feed-container">
+        {signal.newsFeed.map((news) => (
+          <div key={news.id} className="news-item">
+            {/* 3px source credibility bar */}
+            <div className="source-bar" style={{ background: sourceTypeColor(news.sourceType) }} />
+            <div className="news-item-body">
+              <div className="news-item-meta">
+                <span className="source-tag" style={{ color: sourceTypeColor(news.sourceType) }}>
+                  {sourceTypeLabel(news.sourceType)} · {news.source}
                 </span>
-                <span className="sentiment-pill" style={{ color: sentimentColor(news.sentiment), fontSize: '10px', padding: '2px 6px' }}>
+                <span className="news-credibility">{news.credibilityScore}% verified</span>
+              </div>
+              <div className="news-sentiment-row">
+                <p className="headline news-headline">{news.headline}</p>
+                <span className="sentiment-pill" style={{ color: sentimentColor(news.sentiment), fontSize: '10px', flexShrink: 0 }}>
                   {sentimentLabel(news.sentiment)}
                 </span>
               </div>
-              <p className="headline" style={{ margin: '0 0 6px 0', fontSize: '14px', lineHeight: 1.3 }}>{news.headline}</p>
-              <p className="detail" style={{ margin: 0, fontSize: '13px', lineHeight: 1.4 }}>{news.detail}</p>
+              <p className="detail">{news.detail}</p>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       <div className="signal-meta-row" style={{ marginTop: '4px', marginBottom: '16px' }}>
@@ -365,6 +454,13 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const [localPurse, setLocalPurse] = useState(0)
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null)
   const [showResults, setShowResults] = useState(false)
+  const [activeTheme, setActiveTheme] = useState('')
+  const [idleHint, setIdleHint] = useState<string | null>(null)
+
+  const { toasts, addToast } = useToasts()
+  const roundStartPurseRef = useRef<number>(0)
+  const prevSnapshotRef = useRef<GameSnapshot | null>(null)
+  const lastInteractionRef = useRef<number>(Date.now())
 
   useEffect(() => {
     requestedCredentialsRef.current = requestedCredentials
@@ -399,12 +495,72 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const isSubmitted = viewerSubmission.hasSubmitted
   const teamInvestmentSignature = JSON.stringify(myTeamData?.investments ?? null)
 
+  // Capture purse at round start for breakeven tracking
   useEffect(() => {
-    if (snapshot?.round) {
-      setPendingSubmit(false)
-      setInvestmentError(null)
+    if (snapshot?.phase === 'live' && currentPurse > 0) {
+      roundStartPurseRef.current = currentPurse + totalInvested(currentInvestments)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [snapshot?.round])
+
+  // Social proof toast: diff leaderboard between snapshots
+  useEffect(() => {
+    if (!snapshot || !prevSnapshotRef.current || !joinedCredentials) return
+    const myId = joinedCredentials.teamId
+    const prev = prevSnapshotRef.current.leaderboard
+    const curr = snapshot.leaderboard
+    const changed = new Map<string, string[]>() // companyId -> teamNames
+    for (const entry of curr) {
+      if (entry.teamId === myId) continue
+      const prevEntry = prev.find((p) => p.teamId === entry.teamId)
+      if (!prevEntry) continue
+      for (const cId of COMPANY_IDS) {
+        if ((entry.investments[cId] ?? 0) !== (prevEntry.investments[cId] ?? 0)) {
+          const existing = changed.get(cId) ?? []
+          changed.set(cId, [...existing, entry.name])
+        }
+      }
+    }
+    for (const [cId, teams] of changed.entries()) {
+      const companyName = snapshot.currentRound?.companies.find((c) => c.id === cId)?.name ?? cId
+      const teamCount = teams.length
+      addToast(`${teamCount} ${teamCount === 1 ? 'team' : 'teams'} just adjusted their ${companyName} position`)
+    }
+    prevSnapshotRef.current = snapshot
+  }, [snapshot, joinedCredentials, addToast])
+
+  // Keep prevSnapshotRef in sync
+  useEffect(() => {
+    prevSnapshotRef.current = snapshot
+  }, [snapshot])
+
+  // Theme sync
+  useEffect(() => {
+    document.body.dataset.theme = activeTheme
+  }, [activeTheme])
+
+  // Idle hint interval
+  useEffect(() => {
+    if (!snapshot?.currentRound || isSubmitted || snapshot.phase !== 'live') return
+    const timerId = window.setInterval(() => {
+      if (Date.now() - lastInteractionRef.current > 15000) {
+        // Pick a random investable company to hint about
+        const companyId = COMPANY_IDS[Math.floor(Math.random() * COMPANY_IDS.length)]
+        const hint = pickHint(companyId, snapshot.currentRound!.id)
+        if (hint) setIdleHint(hint)
+      }
+    }, 1000)
+    return () => window.clearInterval(timerId)
+  }, [snapshot?.currentRound?.id, isSubmitted, snapshot?.phase])
+
+  const riskScore = useMemo(
+    () => computeRiskScore(currentInvestments, currentPurse + totalInvestedAmount),
+    [currentInvestments, currentPurse, totalInvestedAmount],
+  )
+
+  const gapToBreakeven = roundStartPurseRef.current > 0
+    ? roundStartPurseRef.current - (currentPurse + totalInvestedAmount)
+    : 0
 
   useEffect(() => {
     if (myTeamData) {
@@ -585,6 +741,8 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
     const socket = socketRef.current
     if (!socket || snapshot?.phase !== 'live') return
     setInvestmentError(null)
+    lastInteractionRef.current = Date.now()
+    setIdleHint(null)
 
     socket.emit('team:invest', { amount, companyId }, (response: AckResponse<{ purse: number; invested: number }>) => {
       if (!response.ok) {
@@ -597,6 +755,8 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
     const socket = socketRef.current
     if (!socket || snapshot?.phase !== 'live') return
     setInvestmentError(null)
+    lastInteractionRef.current = Date.now()
+    setIdleHint(null)
 
     socket.emit('team:withdraw', { amount, companyId }, (response: AckResponse<{ purse: number; invested: number }>) => {
       if (!response.ok) {
@@ -716,12 +876,25 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
           <span className={`phase-chip ${snapshot?.phase ?? 'idle'}`}>{formatPhaseLabel(snapshot?.phase ?? 'idle')}</span>
           {snapshot ? <span className="shell-chip">Timer {formatCountdown(countdownMs || snapshot.roundDurationMs)}</span> : null}
           <span className="shell-chip">{connectionLabel}</span>
+          {/* Theme switcher */}
+          <select
+            className="theme-switcher"
+            aria-label="Color theme"
+            value={activeTheme}
+            onChange={(e) => setActiveTheme(e.target.value)}
+          >
+            {THEMES.map((t) => (
+              <option key={t.id} value={t.id}>{t.label}</option>
+            ))}
+          </select>
         </div>
       </div>
 
       <PortfolioStrip purse={currentPurse} totalInvestedAmount={totalInvestedAmount} totalValue={totalValue} />
 
-      <section className="surface-panel story-panel">
+      {totalInvestedAmount > 0 ? <Riskometer score={riskScore} /> : null}
+
+      <section className="surface-panel story-panel" data-mood={snapshot?.marketMood ?? 'stable'}>
         <div className="story-head">
           <div>
             <span className="eyebrow">Round context</span>
@@ -749,6 +922,15 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
                 : 'The host has not started the next round yet.'}
           </p>
         )}
+
+        {/* Idle hint banner */}
+        {idleHint ? (
+          <div className="hint-banner" role="status">
+            <span className="hint-icon">💡</span>
+            <p>{idleHint}</p>
+            <button type="button" className="hint-dismiss" aria-label="Dismiss hint" onClick={() => setIdleHint(null)}>✕</button>
+          </div>
+        ) : null}
       </section>
 
       {currentRound ? (
@@ -812,6 +994,14 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
             </button>
           </div>
 
+          {/* Breakeven banner */}
+          {snapshot?.phase === 'live' && roundStartPurseRef.current > 0 ? (
+            <p className={`breakeven-banner ${gapToBreakeven > 0 ? 'behind' : 'ahead'}`}>
+              {gapToBreakeven > 0
+                ? `You're ${formatCurrency(gapToBreakeven)} away from recovering your starting position.`
+                : `You're ahead of your starting position.`}
+            </p>
+          ) : null}
           {investmentError ? <p className="message-banner error">{investmentError}</p> : null}
         </section>
       ) : null}
@@ -849,7 +1039,10 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
       ) : null}
 
       {serverMessage ? <p className="message-banner info">{serverMessage}</p> : null}
+
+      <ToastStack toasts={toasts} />
     </section>
+
   )
 }
 

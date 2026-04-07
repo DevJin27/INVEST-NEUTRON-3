@@ -11,9 +11,13 @@ export interface TeamCredentials {
   name: string
 }
 
+export type NewsSourceType = 'verified_press' | 'social_rumor' | 'sponsored_content' | 'analyst_note'
+
 export interface NewsItem {
   id: string
   source: string
+  sourceType: NewsSourceType
+  credibilityScore: number
   headline: string
   detail: string
   sentiment: 'positive' | 'negative' | 'neutral'
@@ -57,10 +61,13 @@ export interface CountdownState {
   endsAt: number | null
 }
 
+export type MarketMood = 'frenzy' | 'caution' | 'stable'
+
 export interface BaseSnapshot extends CountdownState {
   activeTeamsCount: number
   currentRound: RoundData | null
   leaderboard: LeaderboardEntry[]
+  marketMood: MarketMood
   round: number
   roundDurationMs: number
   totalRounds: number

@@ -73,6 +73,42 @@
   --mono: var(--font-mono);
 }
 
+/* ─── Theme: Neon Growth ─── */
+[data-theme="neon-growth"] {
+  --success: #00e676;
+  --success-light: #39ff7a;
+  --positive: rgba(0, 230, 118, 0.15);
+  --positive-strong: #39ff7a;
+  --accent: #0af5a0;
+  --accent-light: #39ff8a;
+  --primary: #00e676;
+  --primary-light: #69ffb0;
+}
+
+/* ─── Theme: Crimson Risk ─── */
+[data-theme="crimson-risk"] {
+  --danger: #ff0a36;
+  --danger-light: #ff2d4a;
+  --negative: rgba(255, 10, 54, 0.14);
+  --negative-strong: #ff2d4a;
+  --accent: #ff4a6a;
+  --accent-light: #ff6b85;
+  --primary: #e00032;
+  --primary-light: #ff2d4a;
+}
+
+/* ─── Theme: Navy Stability ─── */
+[data-theme="navy-stability"] {
+  --accent: #5b7ec9;
+  --accent-light: #7a95d8;
+  --accent-strong: #7a95d8;
+  --primary: #4a6fa5;
+  --primary-light: #6889c0;
+  --bg-primary: #07101c;
+  --bg-secondary: #0e1a2c;
+  --bg-tertiary: #172338;
+}
+
 /* Base Reset & Modern Setup */
 * {
   box-sizing: border-box;

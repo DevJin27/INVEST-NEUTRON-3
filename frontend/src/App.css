@@ -793,3 +793,304 @@
     align-items: flex-start;
   }
 }
+
+/* ─── Phase 1C: Mobile horizontal card strip ─────────────────────────────── */
+@media (max-width: 700px) {
+  .opportunity-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+    padding-bottom: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .opportunity-card {
+    flex: 0 0 88vw;
+    scroll-snap-align: start;
+  }
+
+  /* Collapse custom amount to a secondary toggle on mobile */
+  .custom-row {
+    display: none;
+  }
+
+  .custom-row.expanded {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+  }
+}
+
+/* ─── Phase 1B: News feed and source credibility bar ─────────────────────── */
+.news-feed-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 210px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin: 12px 0 4px;
+}
+
+.news-feed-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.news-feed-container::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 4px;
+}
+
+.news-item {
+  display: grid;
+  grid-template-columns: 3px 1fr;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.source-bar {
+  width: 3px;
+  border-radius: 12px 0 0 12px;
+  flex-shrink: 0;
+}
+
+.news-item-body {
+  padding: 10px 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.news-item-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.news-credibility {
+  font-size: 10px;
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
+.news-sentiment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.news-headline {
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* ─── Phase 2A: Riskometer ───────────────────────────────────────────────── */
+.riskometer-wrap {
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: grid;
+  gap: 10px;
+}
+
+.riskometer-track {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+  overflow: visible;
+}
+
+.riskometer-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 300ms ease, background 300ms ease;
+}
+
+.riskometer-indicator {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--text-primary);
+  border: 2px solid var(--bg-primary);
+  transition: left 300ms ease;
+  pointer-events: none;
+}
+
+.riskometer-zones {
+  display: flex;
+  justify-content: space-between;
+}
+
+.risk-zone-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  transition: color 300ms ease;
+}
+
+.risk-zone-label.active {
+  font-weight: 800;
+}
+
+/* ─── Phase 2B: Market Mood on story-panel ───────────────────────────────── */
+.story-panel {
+  transition: border-color 600ms ease, box-shadow 600ms ease;
+}
+
+.story-panel[data-mood="frenzy"] {
+  border-color: rgba(245, 181, 93, 0.5);
+  box-shadow: 0 0 0 1px rgba(245, 181, 93, 0.18), var(--shadow-deep);
+}
+
+.story-panel[data-mood="caution"] {
+  border-color: rgba(114, 188, 255, 0.4);
+  box-shadow: 0 0 0 1px rgba(114, 188, 255, 0.14), var(--shadow-deep);
+}
+
+@keyframes moodPulse {
+  0%, 100% { border-color: rgba(245, 181, 93, 0.5); }
+  50% { border-color: rgba(245, 181, 93, 0.9); }
+}
+
+.story-panel[data-mood="frenzy"] {
+  animation: moodPulse 2s ease-in-out infinite;
+}
+
+/* ─── Phase 2C: Social proof toast stack ─────────────────────────────────── */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.toast-stack {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast-item {
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: rgba(20, 28, 45, 0.92);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  animation: toastIn 250ms ease-out;
+  max-width: 280px;
+}
+
+/* ─── Phase 2D: Breakeven banner ─────────────────────────────────────────── */
+.breakeven-banner {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.breakeven-banner.behind {
+  background: rgba(245, 181, 93, 0.1);
+  color: var(--accent-strong);
+  border: 1px solid rgba(245, 181, 93, 0.2);
+}
+
+.breakeven-banner.ahead {
+  background: var(--positive);
+  color: var(--positive-strong);
+  border: 1px solid rgba(121, 220, 174, 0.2);
+}
+
+/* ─── Phase 2E: Idle hint banner ─────────────────────────────────────────── */
+@keyframes hintFadeIn {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 120px; }
+}
+
+.hint-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(114, 188, 255, 0.08);
+  border: 1px solid rgba(114, 188, 255, 0.18);
+  animation: hintFadeIn 300ms ease-out;
+  overflow: hidden;
+}
+
+.hint-banner p {
+  flex: 1;
+  font-size: 0.91rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.hint-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.hint-dismiss {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-faint);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.hint-dismiss:hover {
+  color: var(--text-primary);
+}
+
+/* ─── Theme switcher ─────────────────────────────────────────────────────── */
+.theme-switcher {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.theme-switcher:focus {
+  outline: none;
+  border-color: var(--border-strong);
+}
+

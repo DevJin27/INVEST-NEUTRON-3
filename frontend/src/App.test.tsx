@@ -32,37 +32,37 @@ function createRoundData(): RoundData {
         id: 'reliance',
         name: 'Reliance Industries',
         sector: 'Conglomerate',
-        newsFeed: [{ id: 'n1', source: 'Reuters', headline: 'Reliance builds a new telecom thesis.', sentiment: 'positive', detail: 'Infrastructure and telecom are both moving into focus.' }]
+        newsFeed: [{ id: 'n1', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 82, headline: 'Reliance builds a new telecom thesis.', sentiment: 'positive', detail: 'Infrastructure and telecom are both moving into focus.' }]
       },
       {
         id: 'hdfc_bank',
         name: 'HDFC Bank',
         sector: 'Banking',
-        newsFeed: [{ id: 'n2', source: 'Reuters', headline: 'Deposits continue compounding.', sentiment: 'positive', detail: 'Branch expansion and credit quality remain strong.' }]
+        newsFeed: [{ id: 'n2', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 88, headline: 'Deposits continue compounding.', sentiment: 'positive', detail: 'Branch expansion and credit quality remain strong.' }]
       },
       {
         id: 'infosys',
         name: 'Infosys',
         sector: 'IT',
-        newsFeed: [{ id: 'n3', source: 'Reuters', headline: 'Hiring plans soften.', sentiment: 'negative', detail: 'Global demand is wobbling, but the balance sheet is strong.' }]
+        newsFeed: [{ id: 'n3', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 79, headline: 'Hiring plans soften.', sentiment: 'negative', detail: 'Global demand is wobbling, but the balance sheet is strong.' }]
       },
       {
         id: 'yes_bank',
         name: 'Yes Bank',
         sector: 'Banking',
-        newsFeed: [{ id: 'n4', source: 'Reuters', headline: 'Growth is accelerating fast.', sentiment: 'positive', detail: 'Momentum is strong, but durability is still debated.' }]
+        newsFeed: [{ id: 'n4', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 75, headline: 'Growth is accelerating fast.', sentiment: 'positive', detail: 'Momentum is strong, but durability is still debated.' }]
       },
       {
         id: 'byjus',
         name: "Byju's",
         sector: 'EdTech',
-        newsFeed: [{ id: 'n5', source: 'Reuters', headline: 'Consumer demand is building.', sentiment: 'neutral', detail: 'Adoption is climbing, though monetization remains young.' }]
+        newsFeed: [{ id: 'n5', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 72, headline: 'Consumer demand is building.', sentiment: 'neutral', detail: 'Adoption is climbing, though monetization remains young.' }]
       },
       {
         id: 'adani',
         name: 'Adani Group',
         sector: 'Infrastructure',
-        newsFeed: [{ id: 'n6', source: 'Reuters', headline: 'Large projects are stacking up.', sentiment: 'positive', detail: 'Execution risk is real, but the opportunity set is large.' }]
+        newsFeed: [{ id: 'n6', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 77, headline: 'Large projects are stacking up.', sentiment: 'positive', detail: 'Execution risk is real, but the opportunity set is large.' }]
       },
     ] satisfies CompanySignal[],
   }
@@ -84,6 +84,7 @@ function createTeamSnapshot(overrides: Partial<GameSnapshot> = {}): GameSnapshot
       },
     ],
     phase: 'live',
+    marketMood: 'stable',
     remainingMs: 45000,
     round: 1,
     roundDurationMs: 45000,
@@ -116,6 +117,7 @@ function createAdminSnapshot(overrides: Partial<AdminSnapshot> = {}): AdminSnaps
       },
     ],
     phase: 'idle',
+    marketMood: 'stable',
     remainingMs: 0,
     round: 0,
     roundDurationMs: 60000,

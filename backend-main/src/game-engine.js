@@ -117,12 +117,24 @@ class GameEngine {
     return safe;
   }
 
+  getMarketMood() {
+    if (this.phase !== GAME_PHASES.LIVE) return 'stable';
+    const total = this.teams.size;
+    if (total === 0) return 'stable';
+    const submittedPct = this.submissions.size / total;
+    const remaining = this.getRemainingMs();
+    if (submittedPct > 0.7 && remaining > 60000) return 'frenzy';
+    if (submittedPct < 0.3 && remaining < 30000) return 'caution';
+    return 'stable';
+  }
+
   getBaseSnapshot() {
     return {
       activeTeamsCount: this.getActiveTeamsCount(),
       currentRound: this.getSafeRoundData(),
       endsAt: this.endsAt,
       leaderboard: this.getLeaderboard(),
+      marketMood: this.getMarketMood(),
       phase: this.phase,
       remainingMs: this.getRemainingMs(),
       round: this.round,

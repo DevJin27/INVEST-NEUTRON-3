@@ -150,3 +150,26 @@ export function getRoundSummary(results: RoundResults): { best: CompanyId | null
 
   return { best, worst }
 }
+
+/**
+ * Computes a 0–100 Riskometer score using the Herfindahl-Hirschman Index.
+ * 0 = perfectly spread (Conservative), 100 = all-in one company (Reckless).
+ */
+export function computeRiskScore(investments: Investments, portfolioTotal: number): number {
+  if (portfolioTotal <= 0) return 0
+  const hhi = COMPANY_IDS.reduce((sum, id) => {
+    const pct = ((investments[id] ?? 0) / portfolioTotal) * 100
+    return sum + pct * pct
+  }, 0)
+  // HHI min ≈ 1666 (equal across 6), max = 10000 (100% one stock)
+  const clamped = Math.max(1666, Math.min(10000, hhi))
+  return Math.round(((clamped - 1666) / (10000 - 1666)) * 100)
+}
+
+export type RiskZone = 'conservative' | 'bold' | 'reckless'
+
+export function getRiskZone(score: number): RiskZone {
+  if (score <= 33) return 'conservative'
+  if (score <= 66) return 'bold'
+  return 'reckless'
+}
