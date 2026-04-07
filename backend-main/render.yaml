@@ -14,8 +14,8 @@ services:
       - key: ADMIN_SECRET
         generateValue: true
       - key: CORS_ORIGINS
-        value: "*"
+        value: "https://invest-neutron-3.vercel.app"
       - key: ROUND_DURATION_MS
         value: 10000
       - key: TOTAL_ROUNDS
-        value: 30
+        value: 6

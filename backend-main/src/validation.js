@@ -15,10 +15,29 @@ function parseIntegerEnv(rawValue, fallback, name) {
   return value;
 }
 
+function normalizeOrigin(rawValue) {
+  if (typeof rawValue !== 'string') return null;
+
+  const value = rawValue.trim();
+  if (!value) return null;
+  if (value === '*') return '*';
+
+  try {
+    return new URL(value).origin;
+  } catch (_error) {
+    return value.replace(/\/+$/, '');
+  }
+}
+
 function parseCorsOrigins(rawValue) {
   if (!rawValue) return ['*'];
-  const origins = String(rawValue).split(',').map((s) => s.trim()).filter(Boolean);
-  return origins.length > 0 ? origins : ['*'];
+  const origins = String(rawValue)
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
+  if (origins.includes('*')) return ['*'];
+  return origins.length > 0 ? [...new Set(origins)] : ['*'];
 }
 
 function validateRoundDurationMs(roundDurationMs) {
@@ -134,6 +153,7 @@ function loadGameData() {
 module.exports = {
   loadConfig,
   loadGameData,
+  normalizeOrigin,
   parseCorsOrigins,
   validateGameData,
   validateRoundDurationMs,

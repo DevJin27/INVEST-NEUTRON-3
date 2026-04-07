@@ -38,6 +38,8 @@ npm test
 3. Set environment variables in Render Dashboard
 4. Deploy
 
+Render dashboard values become the runtime source of truth after the service is created. Keep the dashboard and `render.yaml` aligned, especially for `CORS_ORIGINS`.
+
 ### Option 2: Manual Configuration
 
 Create `render.yaml` in repo root:
@@ -56,8 +58,16 @@ services:
       - key: NODE_ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://your-frontend-domain.com
+        value: https://invest-neutron-3.vercel.app
 ```
+
+For this production deployment, use the exact Vercel production origin only:
+
+```text
+CORS_ORIGINS=https://invest-neutron-3.vercel.app
+```
+
+Do not add a trailing slash, and do not include Vercel preview URLs unless you explicitly want previews to connect.
 
 ## API Reference
 
@@ -114,7 +124,8 @@ services:
 
 - Change `ADMIN_SECRET` before production deployment
 - Use HTTPS in production
-- Configure `CORS_ORIGINS` to match your frontend domain
+- Configure `CORS_ORIGINS` to match your frontend domain exactly
+- If browser requests return `500` or Socket.IO polling returns `400` only when an `Origin` header is present, verify the live Render dashboard value for `CORS_ORIGINS` first
 - Admin actions are rate-limited (500ms between actions)
 
 ## Testing

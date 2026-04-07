@@ -20,7 +20,9 @@ This service provides the in-memory game engine for the auction game. It uses Ex
 
 - Your proxy must allow WebSocket upgrade traffic end-to-end.
 - Set `CORS_ORIGINS` to the exact frontend origins you want to allow in production.
-- Socket.io is configured for WebSocket-only transport with upgrades disabled and compression turned off for lower latency.
+- `CORS_ORIGINS` accepts a comma-separated allowlist and normalizes trailing slashes, so `https://invest-neutron-3.vercel.app/` matches the browser origin `https://invest-neutron-3.vercel.app`.
+- Production currently targets only `https://invest-neutron-3.vercel.app`; Vercel preview URLs are intentionally excluded.
+- Socket.io is configured for polling plus WebSocket transport so browser clients can complete the initial handshake reliably behind Render.
 - `GET /health` exposes status, uptime, current phase, round number, active team count, and remaining round time.
 - `GET /state` exposes a sanitized in-memory snapshot for debugging and reconnect hydration.
 

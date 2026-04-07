@@ -8,14 +8,42 @@ const { ADMIN_ACTION_RATE_LIMIT_MS } = require('./constants');
 const { createError, serializeError } = require('./errors');
 const { GameEngine } = require('./game-engine');
 const { createStateLock } = require('./mutex');
-const { loadConfig, loadGameData } = require('./validation');
+const { loadConfig, loadGameData, normalizeOrigin } = require('./validation');
 
-function buildCorsOriginChecker(corsOrigins) {
+function isOriginAllowed(origin, corsOrigins) {
+  if (!origin || corsOrigins.includes('*')) return true;
+  const normalizedOrigin = normalizeOrigin(origin);
+  return normalizedOrigin ? corsOrigins.includes(normalizedOrigin) : false;
+}
+
+function buildHttpCorsOriginChecker(corsOrigins) {
   if (corsOrigins.includes('*')) return (_origin, callback) => callback(null, true);
   const allowedOrigins = new Set(corsOrigins);
   return (origin, callback) => {
-    if (!origin || allowedOrigins.has(origin)) { callback(null, true); return; }
-    callback(createError('FORBIDDEN', { origin, reason: 'Origin not allowed.' }));
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (normalizedOrigin && allowedOrigins.has(normalizedOrigin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(null, false);
+  };
+}
+
+function buildSocketOriginGate(corsOrigins) {
+  return (req, callback) => {
+    const origin = req.headers.origin;
+    if (isOriginAllowed(origin, corsOrigins)) {
+      callback(null, true);
+      return;
+    }
+
+    callback('Origin not allowed.', false);
   };
 }
 
@@ -43,10 +71,12 @@ function createRealtimeGameServer(options = {}) {
   const { withStateLock } = createStateLock();
   const app = express();
   const httpServer = http.createServer(app);
+  const corsOriginChecker = buildHttpCorsOriginChecker(config.corsOrigins);
   const io = new Server(httpServer, {
     // Allow polling so the HTTP upgrade handshake works (needed for Render cold-starts)
     // and so Socket.io can negotiate the WebSocket upgrade properly.
-    cors: { origin: buildCorsOriginChecker(config.corsOrigins) },
+    allowRequest: buildSocketOriginGate(config.corsOrigins),
+    cors: { origin: corsOriginChecker },
     httpCompression: false,
     perMessageDeflate: false,
     serveClient: false,
@@ -59,7 +89,7 @@ function createRealtimeGameServer(options = {}) {
   const serverStartedAt = Date.now();
 
   // credentials: true is incompatible with wildcard CORS origins (browser rejects it).
-  app.use(cors({ origin: buildCorsOriginChecker(config.corsOrigins) }));
+  app.use(cors({ origin: corsOriginChecker }));
   app.use(express.json());
 
   app.get('/health', (_req, res) => {

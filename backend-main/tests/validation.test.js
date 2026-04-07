@@ -42,6 +42,19 @@ describe("startup validation", () => {
     expect(thrownError.details.name).toBe("ROUND_DURATION_MS");
   });
 
+  it("normalizes configured CORS origins when loading config", () => {
+    const config = loadConfig({
+      ADMIN_SECRET: "secret",
+      PORT: "0",
+      CORS_ORIGINS: " https://invest-neutron-3.vercel.app/ , https://preview.example.com/path ",
+    });
+
+    expect(config.corsOrigins).toEqual([
+      "https://invest-neutron-3.vercel.app",
+      "https://preview.example.com",
+    ]);
+  });
+
   it("rejects rounds with unknown companies", () => {
     const invalidRounds = clone(defaultRounds);
     invalidRounds[0].companies[0].id = "unknown-co";

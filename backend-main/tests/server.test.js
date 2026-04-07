@@ -38,6 +38,77 @@ afterEach(async () => {
 });
 
 describe("HTTP and socket integration", () => {
+  it("allows the configured production origin on HTTP routes and normalizes trailing slashes", async () => {
+    const { http } = await registerServer({
+      CORS_ORIGINS: "https://invest-neutron-3.vercel.app/",
+    });
+
+    const response = await http
+      .get("/health")
+      .set("Origin", "https://invest-neutron-3.vercel.app")
+      .expect(200);
+
+    expect(response.headers["access-control-allow-origin"]).toBe(
+      "https://invest-neutron-3.vercel.app"
+    );
+  });
+
+  it("does not turn disallowed HTTP origins into internal server errors", async () => {
+    const { http } = await registerServer({
+      CORS_ORIGINS: "https://invest-neutron-3.vercel.app",
+    });
+
+    const response = await http
+      .get("/health")
+      .set("Origin", "https://not-allowed.example.com")
+      .expect(200);
+
+    expect(response.headers["access-control-allow-origin"]).toBeUndefined();
+    expect(response.body.status).toBe("ok");
+  });
+
+  it("returns a clear forbidden error for disallowed socket origins", async () => {
+    const { port } = await registerServer({
+      CORS_ORIGINS: "https://invest-neutron-3.vercel.app",
+    });
+
+    const response = await fetch(
+      `http://127.0.0.1:${port}/socket.io/?EIO=4&transport=polling&t=forbidden-origin`,
+      {
+        headers: {
+          Origin: "https://not-allowed.example.com",
+        },
+      }
+    );
+
+    expect(response.status).toBe(403);
+    await expect(response.json()).resolves.toEqual({
+      code: 4,
+      message: "Origin not allowed.",
+    });
+  });
+
+  it("allows socket polling handshakes from the configured production origin", async () => {
+    const { port } = await registerServer({
+      CORS_ORIGINS: "https://invest-neutron-3.vercel.app/",
+    });
+
+    const response = await fetch(
+      `http://127.0.0.1:${port}/socket.io/?EIO=4&transport=polling&t=allowed-origin`,
+      {
+        headers: {
+          Origin: "https://invest-neutron-3.vercel.app",
+        },
+      }
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://invest-neutron-3.vercel.app"
+    );
+    await expect(response.text()).resolves.toContain('"sid"');
+  });
+
   it("reports health with active teams and current phase", async () => {
     const { http, port } = await registerServer();
     const teamSocket = await registerSocket(port);
