@@ -1,27 +1,47 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react'
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import './AdminApp.css'
+import {
+  buildDisplayRound,
+  formatAdminAuditAction,
+  getCompanyDisplayMeta,
+  getDisplayReveal,
+  getDisplayYearLabel,
+  getVisibleCompanyIds,
+} from './display'
 import { createSocketClient } from './socket-client'
-import type { AckResponse, AdminSnapshot, AuditLogEntry, RoundResults, SerializedError, SocketLike } from './types'
-import { COMPANY_IDS } from './types'
+import type {
+  AckResponse,
+  AdminSnapshot,
+  AuditLogEntry,
+  CompanyId,
+  RoundResults,
+  SerializedError,
+  SocketLike,
+} from './types'
 import {
   formatCompactCurrency,
   formatCountdown,
   formatCurrency,
+  formatDirectionalReturn,
   formatDuration,
   formatPhaseLabel,
-  formatReturnMultiplier,
+  formatTimestamp,
   getCountdownMs,
+  totalInvested,
 } from './utils'
 
 type SocketFactory = () => SocketLike
+type InferredTradeAction = 'buy' | 'sell'
 
-const COMPANY_EMOJIS: Record<string, string> = {
-  reliance: '🏭',
-  hdfc_bank: '🏦',
-  infosys: '💻',
-  yes_bank: '🏧',
-  byjus: '📚',
-  adani: '⚡',
+interface InferredTradeEntry {
+  action: InferredTradeAction
+  amount: number
+  companyId: CompanyId
+  id: string
+  round: number
+  teamId: string
+  teamName: string
+  timestamp: string
 }
 
 function useCountdown(snapshot: AdminSnapshot | null) {
@@ -39,40 +59,97 @@ function useCountdown(snapshot: AdminSnapshot | null) {
     return () => {
       window.clearInterval(timerId)
     }
-  }, [snapshot?.phase, snapshot?.endsAt])
+  }, [snapshot?.endsAt, snapshot?.phase])
 
   return getCountdownMs(snapshot)
 }
 
-function formatAuditTimestamp(timestamp: string) {
-  const date = new Date(timestamp)
-  return Number.isNaN(date.getTime())
-    ? timestamp
-    : date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-}
-
 function AuditList({ entries }: { entries: AuditLogEntry[] }) {
   if (entries.length === 0) {
-    return <p className="host-empty">No admin actions recorded yet.</p>
+    return <p className="empty-copy">No admin actions recorded yet.</p>
   }
 
   return (
     <div className="audit-list">
-      {entries.slice(-6).reverse().map((entry) => (
+      {entries.slice(-8).reverse().map((entry) => (
         <article key={`${entry.timestamp}-${entry.action}-${entry.socketId}`} className="audit-item">
-          <div className="audit-row">
-            <strong>{entry.action.replace('admin:', '')}</strong>
-            <span className={`audit-pill ${entry.result}`}>{entry.result}</span>
+          <div className="audit-item-head">
+            <strong>{formatAdminAuditAction(entry.action)}</strong>
+            <span className={`audit-status ${entry.result}`}>{entry.result}</span>
           </div>
-          <p>{formatAuditTimestamp(entry.timestamp)}</p>
+          <p>{formatTimestamp(entry.timestamp)}</p>
         </article>
       ))}
     </div>
   )
 }
 
+function InferredTradeList({ entries }: { entries: InferredTradeEntry[] }) {
+  if (entries.length === 0) {
+    return <p className="empty-copy">No participant trade movements captured yet.</p>
+  }
+
+  return (
+    <div className="trade-log-list admin">
+      {entries.map((entry) => (
+        <article key={entry.id} className="trade-log-entry admin">
+          <div className="trade-log-head">
+            <strong>{entry.action === 'buy' ? 'Buy' : 'Sell'}</strong>
+            <span>{formatTimestamp(entry.timestamp)}</span>
+          </div>
+          <div className="trade-log-body">
+            <span>
+              {entry.teamName} • {getCompanyDisplayMeta(entry.companyId).name}
+            </span>
+            <strong>{formatCurrency(entry.amount)}</strong>
+          </div>
+          <p>{getDisplayYearLabel(entry.round)} session</p>
+        </article>
+      ))}
+    </div>
+  )
+}
+
+function inferTrades(previous: AdminSnapshot | null, nextSnapshot: AdminSnapshot): InferredTradeEntry[] {
+  if (!previous || nextSnapshot.round <= 0) {
+    return []
+  }
+
+  const visibleCompanies = getVisibleCompanyIds(nextSnapshot.round)
+  const previousTeams = new Map(previous.leaderboard.map((entry) => [entry.teamId, entry]))
+  const inferred: InferredTradeEntry[] = []
+  const timestamp = new Date().toISOString()
+
+  for (const team of nextSnapshot.leaderboard) {
+    const previousTeam = previousTeams.get(team.teamId)
+    if (!previousTeam) continue
+
+    for (const companyId of visibleCompanies) {
+      const previousAmount = previousTeam.investments[companyId] ?? 0
+      const nextAmount = team.investments[companyId] ?? 0
+      const delta = nextAmount - previousAmount
+
+      if (delta === 0) continue
+
+      inferred.push({
+        action: delta > 0 ? 'buy' : 'sell',
+        amount: Math.abs(delta),
+        companyId,
+        id: `${nextSnapshot.round}-${team.teamId}-${companyId}-${delta}-${timestamp}`,
+        round: nextSnapshot.round,
+        teamId: team.teamId,
+        teamName: team.name,
+        timestamp,
+      })
+    }
+  }
+
+  return inferred.reverse()
+}
+
 export function AdminApp({ socketFactory = createSocketClient }: { socketFactory?: SocketFactory }) {
   const socketRef = useRef<SocketLike | null>(null)
+  const prevSnapshotRef = useRef<AdminSnapshot | null>(null)
   const durationDirtyRef = useRef(false)
 
   const [secret, setSecret] = useState('')
@@ -85,9 +162,14 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
   const [pendingAction, setPendingAction] = useState<string | null>(null)
   const [durationSeconds, setDurationSeconds] = useState('60')
   const [durationDirty, setDurationDirty] = useState(false)
+  const [inferredTrades, setInferredTrades] = useState<InferredTradeEntry[]>([])
+  const [roundFilter, setRoundFilter] = useState('all')
+  const [teamFilter, setTeamFilter] = useState('all')
+  const [actionFilter, setActionFilter] = useState<'all' | InferredTradeAction>('all')
 
   const countdownMs = useCountdown(snapshot)
   const currentResults = roundResults ?? snapshot?.lastRoundResults ?? null
+  const displayRound = useMemo(() => buildDisplayRound(snapshot?.currentRound ?? null, snapshot?.round ?? 0), [snapshot?.currentRound, snapshot?.round])
 
   useEffect(() => {
     durationDirtyRef.current = durationDirty
@@ -100,7 +182,7 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
     const handleDisconnect = () => {
       setIsAuthenticated(false)
       setPendingAction(null)
-      setActionError('Host connection lost. Reconnect to continue.')
+      setActionError('Admin connection lost. Reconnect to continue.')
     }
 
     const handleConnectError = () => {
@@ -108,7 +190,14 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
     }
 
     const handleSnapshot = (nextSnapshot: AdminSnapshot) => {
+      const newTrades = inferTrades(prevSnapshotRef.current, nextSnapshot)
+      if (newTrades.length > 0) {
+        setInferredTrades((current) => [...newTrades, ...current].slice(0, 64))
+      }
+
+      prevSnapshotRef.current = nextSnapshot
       setSnapshot(nextSnapshot)
+
       if (nextSnapshot.phase === 'results' || nextSnapshot.phase === 'finished') {
         setRoundResults(nextSnapshot.lastRoundResults)
       } else {
@@ -161,12 +250,13 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
       { secret },
       (response: AckResponse<{ authenticated: boolean; snapshot: AdminSnapshot }>) => {
         if (response.ok && response.data.authenticated) {
+          prevSnapshotRef.current = response.data.snapshot
           setIsAuthenticated(true)
           setSnapshot(response.data.snapshot)
           setRoundResults(response.data.snapshot.lastRoundResults)
           setDurationSeconds(String(Math.max(1, Math.round(response.data.snapshot.roundDurationMs / 1000))))
           setDurationDirty(false)
-          setActionMessage('Host console connected.')
+          setActionMessage('Admin console connected.')
           return
         }
 
@@ -218,30 +308,27 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
       <section className="host-view">
         <div className="view-intro">
           <div>
-            <span className="eyebrow">Host Console</span>
-            <h2>Control the live room</h2>
-            <p>Authenticate once, set the timer before launch, and run the round lifecycle from a single operating panel.</p>
+            <span className="eyebrow">Admin console</span>
+            <h2>Control the live terminal</h2>
+            <p>Authenticate once, set the timer before launch, and manage the room from a single operating surface.</p>
           </div>
           <div className="chip-row">
-            <span className="shell-chip">Timer setup before launch</span>
-            <span className="shell-chip">End rounds early</span>
-            <span className="shell-chip">Live team monitoring</span>
+            <span className="shell-chip">Timer control</span>
+            <span className="shell-chip">Round override</span>
+            <span className="shell-chip">Admin-only leaderboard</span>
           </div>
         </div>
 
         <div className="host-auth-layout">
-          <section className="surface-panel hero-panel">
+          <section className="host-panel intro-panel">
             <span className="eyebrow">Operator notes</span>
-            <h3>Keep the room calm, visible, and fair.</h3>
-            <p>
-              The host console is tuned for quick decisions: prep the timer, watch team submissions, pause when needed, and
-              resolve a round instantly if the room needs to move on.
-            </p>
+            <h3>Keep the room orderly.</h3>
+            <p>Use the console to control pacing, watch submission status, and review participant movement without changing any backend contracts.</p>
           </section>
 
-          <section className="surface-panel auth-panel">
+          <section className="host-panel auth-panel">
             <span className="eyebrow">Authenticate</span>
-            <h3>Host Access</h3>
+            <h3>Admin access</h3>
             <form className="host-auth-form" onSubmit={handleLogin}>
               <label className="field">
                 <span>Admin Secret</span>
@@ -271,100 +358,100 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
   const isResults = snapshot.phase === 'results'
   const isFinished = snapshot.phase === 'finished'
   const leader = snapshot.leaderboard[0] ?? null
+  const visibleResultCompanies = currentResults ? getVisibleCompanyIds(currentResults.round) : []
+
+  const filteredTrades = inferredTrades.filter((entry) => {
+    if (roundFilter !== 'all' && String(entry.round) !== roundFilter) return false
+    if (teamFilter !== 'all' && entry.teamId !== teamFilter) return false
+    if (actionFilter !== 'all' && entry.action !== actionFilter) return false
+    return true
+  })
+
+  const availableRounds = [...new Set(inferredTrades.map((entry) => entry.round))]
+  const availableTeams = [...new Set(inferredTrades.map((entry) => `${entry.teamId}::${entry.teamName}`))]
 
   return (
     <section className="host-view">
       <div className="view-intro">
         <div>
-          <span className="eyebrow">Host Console</span>
-          <h2>Live room controls</h2>
+          <span className="eyebrow">Admin console</span>
+          <h2>Live market controls</h2>
           <p>
-            Round {snapshot.round} of {snapshot.totalRounds} • {formatPhaseLabel(snapshot.phase)} phase
+            Round {snapshot.round} of {snapshot.totalRounds} • {formatPhaseLabel(snapshot.phase)}
           </p>
         </div>
         <div className="chip-row">
-          <span className="phase-chip host">{formatPhaseLabel(snapshot.phase)}</span>
+          <span className={`phase-chip ${snapshot.phase}`}>{formatPhaseLabel(snapshot.phase)}</span>
           <span className="shell-chip">{snapshot.activeTeamsCount} active teams</span>
           <span className="shell-chip">Timer {formatDuration(snapshot.roundDurationMs)}</span>
         </div>
       </div>
 
       <section className="host-summary-grid">
-        <article className="metric-card surface-panel">
-          <span className="mini-label">Configured timer</span>
+        <article className="summary-card">
+          <span className="summary-label">Configured timer</span>
           <strong>{formatDuration(snapshot.roundDurationMs)}</strong>
         </article>
-        <article className="metric-card surface-panel">
-          <span className="mini-label">Live countdown</span>
+        <article className="summary-card">
+          <span className="summary-label">Live countdown</span>
           <strong>{isLive || isPaused ? formatCountdown(countdownMs) : '00:00.0'}</strong>
         </article>
-        <article className="metric-card surface-panel">
-          <span className="mini-label">Top portfolio</span>
+        <article className="summary-card emphasis">
+          <span className="summary-label">Top portfolio</span>
           <strong>{leader ? formatCompactCurrency(leader.totalValue) : 'No teams yet'}</strong>
         </article>
       </section>
 
-      <div className="host-grid">
-        <section className="surface-panel stage-panel">
+      <div className="host-main-grid">
+        <section className="host-panel spotlight-panel">
           <div className="section-head">
             <div>
-              <span className="eyebrow">Stage</span>
-              <h3>Round spotlight</h3>
+              <span className="eyebrow">Round spotlight</span>
+              <h3>{displayRound ? displayRound.title : 'Room not live yet'}</h3>
             </div>
-            {snapshot.currentRound ? <span className="shell-chip">{snapshot.currentRound.yearRange}</span> : null}
+            {displayRound ? <span className="shell-chip">{displayRound.yearRange}</span> : null}
           </div>
 
-          {snapshot.currentRound && (isLive || isPaused) ? (
-            <div className="stage-hero">
-              <div className="stage-year">{snapshot.currentRound.year}</div>
-              <div className="stage-copy">
-                <h4>{snapshot.currentRound.title}</h4>
-                <p>{snapshot.currentRound.context}</p>
+          {displayRound && (isLive || isPaused) ? (
+            <div className="spotlight-stage">
+              <div className="year-badge-wrap">
+                <span className="summary-label">Visible year</span>
+                <strong className="year-badge">{displayRound.year}</strong>
               </div>
+              <p>{displayRound.context}</p>
               <div className="stage-clock">
-                <span className="mini-label">Countdown</span>
+                <span className="summary-label">Countdown</span>
                 <strong>{formatCountdown(countdownMs)}</strong>
               </div>
             </div>
           ) : null}
 
           {currentResults && (isResults || isFinished) ? (
-            <div className="host-results">
-              <div className="host-results-head">
-                <h4>{currentResults.title} results</h4>
-                <span className="shell-chip">Year {currentResults.year}</span>
-              </div>
-              <div className="host-results-grid">
-                {COMPANY_IDS.map((companyId) => (
-                  <article key={companyId} className="host-result-card">
-                    <span className="company-emoji">{COMPANY_EMOJIS[companyId]}</span>
-                    <strong>{companyId.replace('_', ' ')}</strong>
-                    <span className={currentResults.actualReturns[companyId] >= 0 ? 'positive' : 'negative'}>
-                      {formatReturnMultiplier(currentResults.actualReturns[companyId])}
-                    </span>
-                    <p>{currentResults.yearEndReveal[companyId]}</p>
+            <div className="result-grid host-results-grid">
+              {visibleResultCompanies.map((companyId) => {
+                const meta = getCompanyDisplayMeta(companyId)
+                const value = currentResults.actualReturns[companyId]
+                return (
+                  <article key={companyId} className="result-card">
+                    <div className="result-card-head">
+                      <div>
+                        <span className="ticker-pill">{meta.code}</span>
+                        <strong>{meta.name}</strong>
+                      </div>
+                      <span className={value >= 0 ? 'positive' : 'negative'}>{formatDirectionalReturn(value)}</span>
+                    </div>
+                    <p>{getDisplayReveal(currentResults.round, companyId)}</p>
                   </article>
-                ))}
-              </div>
+                )
+              })}
             </div>
           ) : null}
 
-          {isIdle ? (
-            <div className="stage-empty">
-              <h4>Ready to open the room</h4>
-              <p>Set the timer, wait for teams to join, then start the first market year.</p>
-            </div>
-          ) : null}
-
-          {isFinished && leader ? (
-            <div className="stage-empty">
-              <h4>{leader.name} leads the table</h4>
-              <p>Final portfolio value: {formatCurrency(leader.totalValue)}</p>
-            </div>
-          ) : null}
+          {isIdle ? <p className="empty-copy">Set the timer, wait for desks to join, then open the first market year.</p> : null}
+          {isFinished && leader ? <p className="empty-copy">{leader.name} closes on top with {formatCurrency(leader.totalValue)}.</p> : null}
         </section>
 
-        <section className="surface-panel controls-panel">
+        <section className="host-panel controls-panel">
           <div className="section-head">
             <div>
               <span className="eyebrow">Controls</span>
@@ -389,11 +476,7 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
                 }}
               />
             </label>
-            <button
-              className="secondary-button"
-              type="submit"
-              disabled={!isIdle || pendingAction !== null || !durationDirty}
-            >
+            <button className="secondary-button" type="submit" disabled={!isIdle || pendingAction !== null || !durationDirty}>
               Update timer
             </button>
           </form>
@@ -403,9 +486,9 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
               className="primary-button"
               type="button"
               disabled={!isIdle || pendingAction !== null}
-              onClick={() => runCommand('admin:start-game', {}, 'Game started.')}
+              onClick={() => runCommand('admin:start-game', {}, 'Market opened.')}
             >
-              Start game
+              Open market
             </button>
             <button
               className="secondary-button"
@@ -424,12 +507,12 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
               Resume timer
             </button>
             <button
-              className="danger-button"
+              className="secondary-button"
               type="button"
               disabled={!isLive || pendingAction !== null}
-              onClick={() => runCommand('admin:end-round', {}, 'Round ended early.')}
+              onClick={() => runCommand('admin:end-round', {}, 'Round closed early.')}
             >
-              End round early
+              Close round
             </button>
             <button
               className="secondary-button"
@@ -440,64 +523,112 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
               Next round
             </button>
             <button
-              className="danger-button ghost"
+              className="secondary-button"
               type="button"
               disabled={pendingAction !== null}
-              onClick={() => runCommand('admin:reset-game', {}, 'Game reset to idle.')}
+              onClick={() => runCommand('admin:reset-game', {}, 'Session reset to standby.')}
             >
-              Reset game
+              Reset room
             </button>
           </div>
 
           {actionMessage ? <p className="message-banner info">{actionMessage}</p> : null}
           {actionError ? <p className="message-banner error">{actionError}</p> : null}
         </section>
+      </div>
 
-        <section className="surface-panel teams-panel">
+      <div className="host-lower-grid">
+        <section className="host-panel leaderboard-panel">
           <div className="section-head">
             <div>
-              <span className="eyebrow">Teams</span>
-              <h3>Submissions and balances</h3>
+              <span className="eyebrow">Leaderboard</span>
+              <h3>Participant standings</h3>
             </div>
-            <span className="shell-chip">{snapshot.teamSubmissions.length} joined teams</span>
+            <span className="shell-chip">{snapshot.leaderboard.length} desks</span>
           </div>
 
-          {snapshot.teamSubmissions.length === 0 ? (
-            <p className="host-empty">No teams have joined yet.</p>
+          {snapshot.leaderboard.length === 0 ? (
+            <p className="empty-copy">No desks have joined yet.</p>
           ) : (
-            <div className="team-status-list">
-              {snapshot.teamSubmissions.map((team) => (
-                <article key={team.teamId} className={`team-status-card ${team.hasSubmitted ? 'submitted' : 'pending'}`}>
-                  <div className="team-status-head">
-                    <div>
-                      <strong>{team.name}</strong>
-                      <p>{team.connected ? 'Connected' : 'Disconnected'}</p>
+            <div className="leaderboard-list">
+              {snapshot.leaderboard.map((entry, index) => {
+                const submission = snapshot.teamSubmissions.find((team) => team.teamId === entry.teamId)
+                return (
+                  <article key={entry.teamId} className="leaderboard-row admin">
+                    <div className="leaderboard-rank">#{index + 1}</div>
+                    <div className="leaderboard-copy">
+                      <strong>{entry.name}</strong>
+                      <span>{entry.connected ? 'Connected' : 'Disconnected'} • {submission?.hasSubmitted ? 'Submitted' : 'Waiting'}</span>
                     </div>
-                    <span className={`team-state-pill ${team.hasSubmitted ? 'submitted' : 'pending'}`}>
-                      {team.hasSubmitted ? 'Submitted' : 'Waiting'}
-                    </span>
-                  </div>
-                  <div className="team-balance-row">
-                    <span>{formatCurrency(team.purse)} cash</span>
-                    <span>{formatCurrency(team.totalInvested)} invested</span>
-                    <strong>{formatCurrency(team.totalValue)} total</strong>
-                  </div>
-                </article>
-              ))}
+                    <div className="leaderboard-values">
+                      <span>{formatCurrency(entry.purse)} cash</span>
+                      <span>{formatCurrency(totalInvested(entry.investments))} holdings</span>
+                      <strong>{formatCurrency(entry.totalValue)}</strong>
+                    </div>
+                  </article>
+                )
+              })}
             </div>
           )}
         </section>
 
-        <section className="surface-panel audit-panel">
+        <section className="host-panel">
           <div className="section-head">
             <div>
-              <span className="eyebrow">Audit</span>
-              <h3>Recent host actions</h3>
+              <span className="eyebrow">Backend audit</span>
+              <h3>Recent admin actions</h3>
             </div>
           </div>
           <AuditList entries={snapshot.auditLog} />
         </section>
       </div>
+
+      <section className="host-panel">
+        <div className="section-head">
+          <div>
+            <span className="eyebrow">Participant flow</span>
+            <h3>Inferred trade activity</h3>
+          </div>
+        </div>
+
+        <div className="filter-row">
+          <label className="field compact-field">
+            <span>Round</span>
+            <select aria-label="Round filter" value={roundFilter} onChange={(event) => setRoundFilter(event.target.value)}>
+              <option value="all">All rounds</option>
+              {availableRounds.map((round) => (
+                <option key={round} value={String(round)}>
+                  {getDisplayYearLabel(round)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field compact-field">
+            <span>Team</span>
+            <select aria-label="Team filter" value={teamFilter} onChange={(event) => setTeamFilter(event.target.value)}>
+              <option value="all">All teams</option>
+              {availableTeams.map((team) => {
+                const [teamId, teamName] = team.split('::')
+                return (
+                  <option key={teamId} value={teamId}>
+                    {teamName}
+                  </option>
+                )
+              })}
+            </select>
+          </label>
+          <label className="field compact-field">
+            <span>Action</span>
+            <select aria-label="Action filter" value={actionFilter} onChange={(event) => setActionFilter(event.target.value as 'all' | InferredTradeAction)}>
+              <option value="all">All actions</option>
+              <option value="buy">Buy</option>
+              <option value="sell">Sell</option>
+            </select>
+          </label>
+        </div>
+
+        <InferredTradeList entries={filteredTrades} />
+      </section>
     </section>
   )
 }

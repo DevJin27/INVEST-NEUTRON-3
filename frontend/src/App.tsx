@@ -1,12 +1,21 @@
-import { type CSSProperties, type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type CSSProperties, type FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import AdminApp from './AdminApp'
-import { pickHint } from './hints'
+import {
+  buildDisplayRound,
+  getCompanyDisplayMeta,
+  getCompanyDisplayName,
+  getDisplayRoundTitle,
+  getDisplayReveal,
+  getDisplayYearLabel,
+  getVisibleCompanyIds,
+  type DisplayCompanyView,
+  type FakeCallScript,
+} from './display'
 import { createSocketClient } from './socket-client'
 import type {
   AckResponse,
   CompanyId,
-  CompanySignal,
   ConnectionState,
   CountdownState,
   GameSnapshot,
@@ -17,38 +26,44 @@ import type {
   TeamCredentials,
   ViewerSubmission,
 } from './types'
-import { COMPANY_IDS } from './types'
 import {
   blankInvestments,
-  computeRiskScore,
   formatCompactCurrency,
   formatCountdown,
   formatCurrency,
+  formatDirectionalReturn,
   formatPhaseLabel,
   formatReturn,
-  formatReturnMultiplier,
+  formatTimestamp,
   getCountdownMs,
-  getInvestmentPercentage,
   getQuickInvestAmounts,
-  getRiskZone,
-  getRoundSummary,
   hasInvestments,
-  sentimentColor,
-  sentimentLabel,
   totalInvested,
 } from './utils'
 
 type SocketFactory = () => SocketLike
 type ShellMode = 'team' | 'host'
+type TradeAction = 'buy' | 'sell'
 
+interface SessionTradeEntry {
+  action: TradeAction
+  amount: number
+  companyId: CompanyId
+  id: string
+  round: number
+  timestamp: string
+}
 
-const COMPANY_META: Record<CompanyId, { emoji: string; accent: string }> = {
-  reliance: { emoji: '🏭', accent: '#7eb7ff' },
-  hdfc_bank: { emoji: '🏦', accent: '#7ad4b3' },
-  infosys: { emoji: '💻', accent: '#a8b7ff' },
-  yes_bank: { emoji: '🏧', accent: '#ffd47e' },
-  byjus: { emoji: '📚', accent: '#f4a3b8' },
-  adani: { emoji: '⚡', accent: '#ffb07e' },
+interface PendingSellState {
+  amount: number
+  companyId: CompanyId
+}
+
+interface ScheduledCallState {
+  call: FakeCallScript
+  round: number
+  shown: boolean
+  triggerElapsedMs: number
 }
 
 const EMPTY_SUBMISSION: ViewerSubmission = {
@@ -56,88 +71,6 @@ const EMPTY_SUBMISSION: ViewerSubmission = {
   hasSubmitted: false,
   investments: blankInvestments(),
   canSubmit: false,
-}
-
-const THEMES = [
-  { id: '', label: '🌑 Default' },
-  { id: 'neon-growth', label: '🟢 Neon' },
-  { id: 'crimson-risk', label: '🔴 Crimson' },
-  { id: 'navy-stability', label: '🔵 Navy' },
-] as const
-
-// ─── Source type credibility bar colours ───────────────────────────────────
-function sourceTypeColor(st: CompanySignal['newsFeed'][number]['sourceType']): string {
-  switch (st) {
-    case 'verified_press':   return 'var(--positive-strong)'
-    case 'analyst_note':     return 'var(--accent-light)'
-    case 'social_rumor':     return 'var(--negative-strong)'
-    case 'sponsored_content':return '#a87700'
-  }
-}
-
-function sourceTypeLabel(st: CompanySignal['newsFeed'][number]['sourceType']): string {
-  switch (st) {
-    case 'verified_press':   return 'PRESS'
-    case 'analyst_note':     return 'ANALYST'
-    case 'social_rumor':     return 'RUMOR'
-    case 'sponsored_content':return 'AD'
-  }
-}
-
-// ─── Toast system ──────────────────────────────────────────────────────────
-type Toast = { id: number; text: string }
-
-function useToasts() {
-  const [toasts, setToasts] = useState<Toast[]>([])
-  const counterRef = useRef(0)
-
-  const addToast = useCallback((text: string) => {
-    const id = ++counterRef.current
-    setToasts((prev) => [...prev.slice(-1), { id, text }]) // max 2 visible
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 4000)
-  }, [])
-
-  return { toasts, addToast }
-}
-
-function ToastStack({ toasts }: { toasts: Toast[] }) {
-  if (toasts.length === 0) return null
-  return (
-    <div className="toast-stack" aria-live="polite">
-      {toasts.map((t) => (
-        <div key={t.id} className="toast-item">{t.text}</div>
-      ))}
-    </div>
-  )
-}
-
-// ─── Riskometer ────────────────────────────────────────────────────────────
-function Riskometer({ score }: { score: number }) {
-  const zone = getRiskZone(score)
-  const labels = [
-    { zone: 'conservative', label: 'Conservative', color: 'var(--positive-strong)' },
-    { zone: 'bold', label: 'Bold', color: 'var(--warning, #f59e0b)' },
-    { zone: 'reckless', label: 'Reckless', color: 'var(--negative-strong)' },
-  ] as const
-
-  return (
-    <div className="riskometer-wrap">
-      <span className="mini-label">Portfolio Confidence</span>
-      <div className="riskometer-track" role="meter" aria-valuenow={score} aria-valuemin={0} aria-valuemax={100}>
-        <div className="riskometer-fill" style={{ width: `${score}%`, background: zone === 'conservative' ? 'var(--positive-strong)' : zone === 'bold' ? 'var(--warning, #f59e0b)' : 'var(--negative-strong)' }} />
-        <div className="riskometer-indicator" style={{ left: `${score}%` }} />
-      </div>
-      <div className="riskometer-zones">
-        {labels.map(({ zone: z, label, color }) => (
-          <span key={z} className={`risk-zone-label ${z === zone ? 'active' : ''}`} style={z === zone ? { color } : undefined}>
-            {label}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
 }
 
 function getModeFromHash(hash: string): ShellMode {
@@ -166,157 +99,187 @@ function useCountdown(snapshot: CountdownState | null): number {
     return () => {
       window.clearInterval(timerId)
     }
-  }, [snapshot?.phase, snapshot?.endsAt])
+  }, [snapshot?.endsAt, snapshot?.phase])
 
   return getCountdownMs(snapshot)
 }
 
 function buildConnectionLabel(connectionState: ConnectionState, phase?: GameSnapshot['phase']) {
   if (connectionState === 'reconnecting') return 'Reconnecting'
-  if (connectionState === 'connecting' || connectionState === 'joining') return 'Connecting'
+  if (connectionState === 'connecting' || connectionState === 'joining') return 'Linking terminal'
   if (phase === 'paused') return 'Round paused'
-  if (phase === 'live') return 'Live round'
-  if (phase === 'results') return 'Results ready'
-  if (phase === 'finished') return 'Game complete'
+  if (phase === 'live') return 'Market open'
+  if (phase === 'results') return 'Settlement in progress'
+  if (phase === 'finished') return 'Session closed'
   return 'Standing by'
 }
 
-function InvestmentCard({
-  companyId,
-  signal,
-  invested,
+function PortfolioSummary({
   purse,
+  settledLabel,
+  settledPnl,
+  totalInvestedAmount,
+  totalValue,
+}: {
+  purse: number
+  settledLabel: string
+  settledPnl: number
+  totalInvestedAmount: number
+  totalValue: number
+}) {
+  return (
+    <section className="portfolio-summary-grid">
+      <article className="summary-card">
+        <span className="summary-label">Cash</span>
+        <strong>{formatCurrency(purse)}</strong>
+        <p>Available for new entries only.</p>
+      </article>
+      <article className="summary-card">
+        <span className="summary-label">Holdings</span>
+        <strong>{formatCurrency(totalInvestedAmount)}</strong>
+        <p>Capital currently parked in live positions.</p>
+      </article>
+      <article className="summary-card">
+        <span className="summary-label">Settled P&amp;L</span>
+        <strong className={settledPnl >= 0 ? 'positive' : 'negative'}>
+          {settledPnl >= 0 ? '+' : ''}
+          {formatCurrency(settledPnl)}
+        </strong>
+        <p>{settledLabel}</p>
+      </article>
+      <article className="summary-card emphasis">
+        <span className="summary-label">Portfolio Value</span>
+        <strong>{formatCurrency(totalValue)}</strong>
+        <p>Cash plus current holdings.</p>
+      </article>
+    </section>
+  )
+}
+
+function AllocationCard({
+  company,
   disabled,
+  invested,
   isSubmitted,
   onInvest,
-  onWithdraw,
+  onRequestSell,
+  purse,
 }: {
-  companyId: CompanyId
-  signal: CompanySignal | undefined
-  invested: number
-  purse: number
+  company: DisplayCompanyView
   disabled: boolean
+  invested: number
   isSubmitted: boolean
   onInvest: (companyId: CompanyId, amount: number) => void
-  onWithdraw: (companyId: CompanyId, amount: number) => void
+  onRequestSell: (companyId: CompanyId, amount: number) => void
+  purse: number
 }) {
-  const meta = COMPANY_META[companyId]
-  const [customAmount, setCustomAmount] = useState('')
-
-  if (!signal) return null
+  const [buyAmount, setBuyAmount] = useState('')
+  const [sellAmount, setSellAmount] = useState('')
 
   const quickAmounts = getQuickInvestAmounts(purse)
-  const investmentPercent = getInvestmentPercentage(
-    {
-      ...blankInvestments(),
-      [companyId]: invested,
-    },
-    companyId,
-    invested,
-  )
 
   function handleCustomInvest() {
-    const amount = Number.parseInt(customAmount, 10)
+    const amount = Number.parseInt(buyAmount, 10)
     if (amount > 0 && amount <= purse) {
-      onInvest(companyId, amount)
-      setCustomAmount('')
+      onInvest(company.id, amount)
+      setBuyAmount('')
+    }
+  }
+
+  function handleSellRequest() {
+    const amount = Number.parseInt(sellAmount, 10)
+    if (amount > 0 && amount <= invested) {
+      onRequestSell(company.id, amount)
+      setSellAmount('')
     }
   }
 
   return (
-    <article className="opportunity-card surface-panel" style={{ '--accent-inline': meta.accent } as CSSProperties}>
-      <div className="opportunity-head">
-        <div className="company-badge">
-          <span className="company-emoji">{meta.emoji}</span>
-          <div>
-            <h3>{signal.name}</h3>
-            <p>{signal.sector}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="news-feed-container">
-        {signal.newsFeed.map((news) => (
-          <div key={news.id} className="news-item">
-            {/* 3px source credibility bar */}
-            <div className="source-bar" style={{ background: sourceTypeColor(news.sourceType) }} />
-            <div className="news-item-body">
-              <div className="news-item-meta">
-                <span className="source-tag" style={{ color: sourceTypeColor(news.sourceType) }}>
-                  {sourceTypeLabel(news.sourceType)} · {news.source}
-                </span>
-                <span className="news-credibility">{news.credibilityScore}% verified</span>
-              </div>
-              <div className="news-sentiment-row">
-                <p className="headline news-headline">{news.headline}</p>
-                <span className="sentiment-pill" style={{ color: sentimentColor(news.sentiment), fontSize: '10px', flexShrink: 0 }}>
-                  {sentimentLabel(news.sentiment)}
-                </span>
-              </div>
-              <p className="detail">{news.detail}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="signal-meta-row" style={{ marginTop: '4px', marginBottom: '16px' }}>
-        <div className="signal-metric" style={{ width: '100%' }}>
-          <span>Locked Allocation</span>
-          <strong>{investmentPercent}%</strong>
-        </div>
-      </div>
-
-      <div className="investment-footer">
+    <article className="allocation-card" style={{ '--company-accent': company.accent } as CSSProperties}>
+      <div className="allocation-card-head">
         <div>
-          <span className="mini-label">Current allocation</span>
-          <strong className="money-value">{formatCurrency(invested)}</strong>
+          <span className="ticker-pill">{company.code}</span>
+          <h3>{company.name}</h3>
+          <p>{company.sector}</p>
         </div>
-        {invested > 0 ? (
-          <button className="ghost-button" type="button" disabled={disabled} onClick={() => onWithdraw(companyId, invested)}>
-            Withdraw all
-          </button>
-        ) : null}
+        <div className="position-pill">
+          <span>Holding</span>
+          <strong>{formatCurrency(invested)}</strong>
+        </div>
       </div>
 
-      {!isSubmitted ? (
-        <div className="action-stack">
-          <div className="quick-grid">
+      <div className="signal-panel">
+        <span className="signal-label">Market read</span>
+        <strong>{company.signal}</strong>
+        <p>{company.detail}</p>
+      </div>
+
+      {isSubmitted ? (
+        <div className="locked-banner">Locked for settlement</div>
+      ) : (
+        <div className="allocation-actions">
+          <div className="quick-amount-grid">
             {quickAmounts.map((amount) => (
               <button
                 key={amount}
-                className="quiet-button"
+                className="secondary-chip"
                 type="button"
                 disabled={disabled || amount > purse}
-                onClick={() => onInvest(companyId, amount)}
+                onClick={() => onInvest(company.id, amount)}
               >
                 +{formatCompactCurrency(amount)}
               </button>
             ))}
           </div>
 
-          <div className="custom-row">
-            <input
-              aria-label={`${signal.name} investment amount`}
-              type="number"
-              min="1"
-              max={purse}
-              placeholder="Custom amount"
-              value={customAmount}
-              disabled={disabled}
-              onChange={(event) => setCustomAmount(event.target.value)}
-            />
+          <div className="input-action-row">
+            <label className="field compact-field">
+              <span>Buy amount</span>
+              <input
+                aria-label={`${company.name} buy amount`}
+                type="number"
+                min="1"
+                max={purse}
+                value={buyAmount}
+                disabled={disabled}
+                placeholder="Enter amount"
+                onChange={(event) => setBuyAmount(event.target.value)}
+              />
+            </label>
             <button
               className="primary-inline-button"
               type="button"
-              disabled={disabled || !customAmount || Number(customAmount) <= 0 || Number(customAmount) > purse}
+              disabled={disabled || !buyAmount || Number(buyAmount) <= 0 || Number(buyAmount) > purse}
               onClick={handleCustomInvest}
             >
-              Invest
+              Buy
+            </button>
+          </div>
+
+          <div className="input-action-row sell-row">
+            <label className="field compact-field">
+              <span>Sell to cash</span>
+              <input
+                aria-label={`${company.name} sell amount`}
+                type="number"
+                min="1"
+                max={invested}
+                value={sellAmount}
+                disabled={disabled || invested <= 0}
+                placeholder={invested > 0 ? 'Enter amount' : 'No holding'}
+                onChange={(event) => setSellAmount(event.target.value)}
+              />
+            </label>
+            <button
+              className="secondary-inline-button"
+              type="button"
+              disabled={disabled || invested <= 0 || !sellAmount || Number(sellAmount) <= 0 || Number(sellAmount) > invested}
+              onClick={handleSellRequest}
+            >
+              Review sale
             </button>
           </div>
         </div>
-      ) : (
-        <div className="locked-banner">Locked for scoring</div>
       )}
     </article>
   )
@@ -332,44 +295,42 @@ function RoundResultsOverlay({
   results: RoundResults
 }) {
   const myOutcome = results.teamOutcomes.find((outcome) => outcome.teamId === myTeamId) ?? null
-  const { best, worst } = getRoundSummary(results)
+  const visibleCompanyIds = getVisibleCompanyIds(results.round)
 
   return (
-    <div className="results-overlay">
-      <div className="results-sheet surface-panel">
-        <div className="results-title-row">
+    <div className="overlay-frame">
+      <div className="overlay-card results-sheet">
+        <div className="overlay-head">
           <div>
-            <span className="eyebrow">Round {results.round}</span>
-            <h2>{results.title} Results</h2>
+            <span className="eyebrow">Settlement {getDisplayYearLabel(results.round)}</span>
+            <h2>{getDisplayRoundTitle(results.round)}</h2>
           </div>
-          <button className="ghost-button" type="button" onClick={onDismiss}>
+          <button className="secondary-inline-button" type="button" onClick={onDismiss}>
             Close
           </button>
         </div>
 
         <div className="result-grid">
-          {COMPANY_IDS.map((companyId) => {
-            const meta = COMPANY_META[companyId]
+          {visibleCompanyIds.map((companyId) => {
+            const meta = getCompanyDisplayMeta(companyId)
             const currentReturn = results.actualReturns[companyId]
-            const reveal = results.yearEndReveal[companyId]
             const myBreakdown = myOutcome?.breakdown[companyId]
 
             return (
-              <article
-                key={companyId}
-                className={`result-card ${companyId === best ? 'best' : ''} ${companyId === worst ? 'worst' : ''}`}
-              >
+              <article key={companyId} className="result-card">
                 <div className="result-card-head">
-                  <span className="company-emoji">{meta.emoji}</span>
                   <div>
-                    <strong>{companyId.replace('_', ' ')}</strong>
-                    <span>{formatReturnMultiplier(currentReturn)}</span>
+                    <span className="ticker-pill">{meta.code}</span>
+                    <strong>{meta.name}</strong>
                   </div>
+                  <span className={currentReturn >= 0 ? 'positive' : 'negative'}>
+                    {formatDirectionalReturn(currentReturn)}
+                  </span>
                 </div>
-                <p>{reveal}</p>
+                <p>{getDisplayReveal(results.round, companyId)}</p>
                 {myBreakdown ? (
                   <div className="result-card-foot">
-                    <span>You invested {formatCurrency(myBreakdown.invested)}</span>
+                    <span>Held {formatCurrency(myBreakdown.invested)}</span>
                     <strong className={myBreakdown.returns >= 0 ? 'positive' : 'negative'}>
                       {myBreakdown.returns >= 0 ? '+' : ''}
                       {formatCurrency(myBreakdown.returns)}
@@ -382,24 +343,24 @@ function RoundResultsOverlay({
         </div>
 
         {myOutcome ? (
-          <div className="summary-band">
+          <div className="settlement-band">
             <div>
-              <span className="mini-label">Total invested</span>
+              <span className="summary-label">Holdings settled</span>
               <strong>{formatCurrency(myOutcome.totalInvested)}</strong>
             </div>
             <div>
-              <span className="mini-label">Returns</span>
+              <span className="summary-label">Round return</span>
               <strong className={myOutcome.returns >= 0 ? 'positive' : 'negative'}>
                 {myOutcome.returns >= 0 ? '+' : ''}
                 {formatCurrency(myOutcome.returns)}
               </strong>
             </div>
             <div>
-              <span className="mini-label">Return rate</span>
+              <span className="summary-label">Return rate</span>
               <strong>{formatReturn(myOutcome.percentReturn)}</strong>
             </div>
             <div>
-              <span className="mini-label">New purse</span>
+              <span className="summary-label">Cash after settlement</span>
               <strong>{formatCurrency(myOutcome.purse)}</strong>
             </div>
           </div>
@@ -409,30 +370,118 @@ function RoundResultsOverlay({
   )
 }
 
-function PortfolioStrip({
-  purse,
-  totalInvestedAmount,
-  totalValue,
+function TradeLogPanel({ entries }: { entries: SessionTradeEntry[] }) {
+  return (
+    <section className="desk-panel">
+      <div className="section-head">
+        <div>
+          <span className="eyebrow">Trade log</span>
+          <h3>Confirmed session activity</h3>
+        </div>
+      </div>
+
+      {entries.length === 0 ? (
+        <p className="empty-copy">No confirmed trades yet.</p>
+      ) : (
+        <div className="trade-log-list">
+          {entries.map((entry) => (
+            <article key={entry.id} className="trade-log-entry participant">
+              <div className="trade-log-head">
+                <strong>{entry.action === 'buy' ? 'Buy' : 'Sell to cash'}</strong>
+                <span>{formatTimestamp(entry.timestamp)}</span>
+              </div>
+              <div className="trade-log-body">
+                <span>{getCompanyDisplayName(entry.companyId)}</span>
+                <strong>{formatCurrency(entry.amount)}</strong>
+              </div>
+              <p>{getDisplayYearLabel(entry.round)} session</p>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function SellConfirmModal({
+  currentCash,
+  onCancel,
+  onConfirm,
+  pending,
+  sellRequest,
 }: {
-  purse: number
-  totalInvestedAmount: number
-  totalValue: number
+  currentCash: number
+  onCancel: () => void
+  onConfirm: () => void
+  pending: boolean
+  sellRequest: PendingSellState
+}) {
+  const company = getCompanyDisplayMeta(sellRequest.companyId)
+  const projectedCash = currentCash + sellRequest.amount
+
+  return (
+    <div className="overlay-frame">
+      <div className="overlay-card confirm-sheet">
+        <div className="overlay-head">
+          <div>
+            <span className="eyebrow">Confirm sale</span>
+            <h2>{company.name}</h2>
+          </div>
+        </div>
+
+        <div className="confirm-grid">
+          <article className="confirm-metric">
+            <span className="summary-label">Sell amount</span>
+            <strong>{formatCurrency(sellRequest.amount)}</strong>
+          </article>
+          <article className="confirm-metric">
+            <span className="summary-label">Current cash</span>
+            <strong>{formatCurrency(currentCash)}</strong>
+          </article>
+          <article className="confirm-metric emphasis">
+            <span className="summary-label">Projected cash</span>
+            <strong>{formatCurrency(projectedCash)}</strong>
+          </article>
+        </div>
+
+        <p className="confirm-copy">
+          This action only moves existing holdings back into cash. Portfolio gains remain part of the position until settlement.
+        </p>
+
+        <div className="confirm-actions">
+          <button className="secondary-inline-button" type="button" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="primary-button" type="button" disabled={pending} onClick={onConfirm}>
+            {pending ? 'Executing...' : 'Confirm sale'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FakeCallModal({
+  call,
+  onDismiss,
+}: {
+  call: FakeCallScript
+  onDismiss: () => void
 }) {
   return (
-    <section className="portfolio-strip">
-      <article className="metric-card surface-panel">
-        <span className="mini-label">Available cash</span>
-        <strong>{formatCurrency(purse)}</strong>
-      </article>
-      <article className="metric-card surface-panel">
-        <span className="mini-label">Invested capital</span>
-        <strong>{formatCurrency(totalInvestedAmount)}</strong>
-      </article>
-      <article className="metric-card surface-panel">
-        <span className="mini-label">Total value</span>
-        <strong>{formatCurrency(totalValue)}</strong>
-      </article>
-    </section>
+    <div className="call-modal">
+      <div className="call-header">
+        <div>
+          <span className="eyebrow">Incoming call</span>
+          <h3>{call.title}</h3>
+        </div>
+        <button className="call-dismiss" type="button" aria-label="Dismiss call" onClick={onDismiss}>
+          Close
+        </button>
+      </div>
+      <p className="call-source">{call.source}</p>
+      <p className="call-body">{call.body}</p>
+    </div>
   )
 }
 
@@ -450,17 +499,15 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const [serverMessage, setServerMessage] = useState<string | null>(null)
   const [investmentError, setInvestmentError] = useState<string | null>(null)
   const [pendingSubmit, setPendingSubmit] = useState(false)
+  const [pendingSellExecution, setPendingSellExecution] = useState(false)
   const [localInvestments, setLocalInvestments] = useState(blankInvestments())
   const [localPurse, setLocalPurse] = useState(0)
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null)
   const [showResults, setShowResults] = useState(false)
-  const [activeTheme, setActiveTheme] = useState('')
-  const [idleHint, setIdleHint] = useState<string | null>(null)
-
-  const { toasts, addToast } = useToasts()
-  const roundStartPurseRef = useRef<number>(0)
-  const prevSnapshotRef = useRef<GameSnapshot | null>(null)
-  const lastInteractionRef = useRef<number>(Date.now())
+  const [tradeLog, setTradeLog] = useState<SessionTradeEntry[]>([])
+  const [pendingSell, setPendingSell] = useState<PendingSellState | null>(null)
+  const [scheduledCall, setScheduledCall] = useState<ScheduledCallState | null>(null)
+  const [activeCall, setActiveCall] = useState<FakeCallScript | null>(null)
 
   useEffect(() => {
     requestedCredentialsRef.current = requestedCredentials
@@ -480,6 +527,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const hasRequestedCredentials = requestedCredentials !== null
   const viewerSubmission = snapshot?.viewerSubmission ?? EMPTY_SUBMISSION
   const currentRound = snapshot?.currentRound ?? null
+  const displayRound = useMemo(() => buildDisplayRound(currentRound, snapshot?.round ?? 0), [currentRound, snapshot?.round])
   const myTeamData = snapshot?.leaderboard.find((entry) => entry.teamId === joinedCredentials?.teamId) ?? null
   const currentPurse = myTeamData?.purse ?? localPurse
   const currentInvestments = myTeamData?.investments ?? localInvestments
@@ -493,81 +541,16 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
     !viewerSubmission.hasSubmitted
   const canSubmit = canAdjustInvestments && !pendingSubmit && hasInvestments(currentInvestments)
   const isSubmitted = viewerSubmission.hasSubmitted
-  const teamInvestmentSignature = JSON.stringify(myTeamData?.investments ?? null)
-
-  // Capture purse at round start for breakeven tracking
-  useEffect(() => {
-    if (snapshot?.phase === 'live' && currentPurse > 0) {
-      roundStartPurseRef.current = currentPurse + totalInvested(currentInvestments)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [snapshot?.round])
-
-  // Social proof toast: diff leaderboard between snapshots
-  useEffect(() => {
-    if (!snapshot || !prevSnapshotRef.current || !joinedCredentials) return
-    const myId = joinedCredentials.teamId
-    const prev = prevSnapshotRef.current.leaderboard
-    const curr = snapshot.leaderboard
-    const changed = new Map<string, string[]>() // companyId -> teamNames
-    for (const entry of curr) {
-      if (entry.teamId === myId) continue
-      const prevEntry = prev.find((p) => p.teamId === entry.teamId)
-      if (!prevEntry) continue
-      for (const cId of COMPANY_IDS) {
-        if ((entry.investments[cId] ?? 0) !== (prevEntry.investments[cId] ?? 0)) {
-          const existing = changed.get(cId) ?? []
-          changed.set(cId, [...existing, entry.name])
-        }
-      }
-    }
-    for (const [cId, teams] of changed.entries()) {
-      const companyName = snapshot.currentRound?.companies.find((c) => c.id === cId)?.name ?? cId
-      const teamCount = teams.length
-      addToast(`${teamCount} ${teamCount === 1 ? 'team' : 'teams'} just adjusted their ${companyName} position`)
-    }
-    prevSnapshotRef.current = snapshot
-  }, [snapshot, joinedCredentials, addToast])
-
-  // Keep prevSnapshotRef in sync
-  useEffect(() => {
-    prevSnapshotRef.current = snapshot
-  }, [snapshot])
-
-  // Theme sync
-  useEffect(() => {
-    document.body.dataset.theme = activeTheme
-  }, [activeTheme])
-
-  // Idle hint interval
-  useEffect(() => {
-    if (!snapshot?.currentRound || isSubmitted || snapshot.phase !== 'live') return
-    const timerId = window.setInterval(() => {
-      if (Date.now() - lastInteractionRef.current > 15000) {
-        // Pick a random investable company to hint about
-        const companyId = COMPANY_IDS[Math.floor(Math.random() * COMPANY_IDS.length)]
-        const hint = pickHint(companyId, snapshot.currentRound!.id)
-        if (hint) setIdleHint(hint)
-      }
-    }, 1000)
-    return () => window.clearInterval(timerId)
-  }, [snapshot?.currentRound?.id, isSubmitted, snapshot?.phase])
-
-  const riskScore = useMemo(
-    () => computeRiskScore(currentInvestments, currentPurse + totalInvestedAmount),
-    [currentInvestments, currentPurse, totalInvestedAmount],
-  )
-
-  const gapToBreakeven = roundStartPurseRef.current > 0
-    ? roundStartPurseRef.current - (currentPurse + totalInvestedAmount)
-    : 0
+  const settledOutcome = roundResults?.teamOutcomes.find((outcome) => outcome.teamId === joinedCredentials?.teamId) ?? null
+  const settledPnl = settledOutcome?.returns ?? 0
+  const settledLabel = roundResults ? `${getDisplayYearLabel(roundResults.round)} settlement` : 'Awaiting first settlement'
 
   useEffect(() => {
     if (myTeamData) {
       setLocalInvestments(myTeamData.investments)
       setLocalPurse(myTeamData.purse)
     }
-  }, [myTeamData?.purse, teamInvestmentSignature])
+  }, [myTeamData?.investments, myTeamData?.purse])
 
   useEffect(() => {
     if (!requestedCredentialsRef.current || socketRef.current) {
@@ -662,6 +645,8 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
     const handleRoundResults = (results: RoundResults) => {
       setRoundResults(results)
       setShowResults(true)
+      setPendingSell(null)
+      setActiveCall(null)
     }
 
     const handleGameError = (error: SerializedError) => {
@@ -693,6 +678,55 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
       socketRef.current = null
     }
   }, [hasRequestedCredentials, socketFactory])
+
+  useEffect(() => {
+    if (snapshot?.round === undefined || snapshot.round <= 0 || snapshot.phase !== 'live' || !displayRound || displayRound.calls.length === 0) {
+      return
+    }
+
+    setActiveCall(null)
+    setScheduledCall((current) => {
+      if (current?.round === snapshot.round) {
+        return current
+      }
+
+      const triggerRatio = 0.35 + Math.random() * 0.35
+      const selectedCall = displayRound.calls[Math.floor(Math.random() * displayRound.calls.length)]
+
+      return {
+        call: selectedCall,
+        round: snapshot.round,
+        shown: false,
+        triggerElapsedMs: snapshot.roundDurationMs * triggerRatio,
+      }
+    })
+  }, [displayRound, snapshot?.phase, snapshot?.round, snapshot?.roundDurationMs])
+
+  useEffect(() => {
+    if (!snapshot || snapshot.phase !== 'live' || !scheduledCall || scheduledCall.round !== snapshot.round || scheduledCall.shown) {
+      return
+    }
+
+    const elapsedMs = snapshot.roundDurationMs - countdownMs
+    if (elapsedMs >= scheduledCall.triggerElapsedMs) {
+      setActiveCall(scheduledCall.call)
+      setScheduledCall((current) => (current ? { ...current, shown: true } : current))
+    }
+  }, [countdownMs, scheduledCall, snapshot])
+
+  function appendTrade(action: TradeAction, companyId: CompanyId, amount: number) {
+    setTradeLog((current) => [
+      {
+        action,
+        amount,
+        companyId,
+        id: `${Date.now()}-${action}-${companyId}-${amount}`,
+        round: snapshot?.round ?? 0,
+        timestamp: new Date().toISOString(),
+      },
+      ...current,
+    ].slice(0, 24))
+  }
 
   function handleJoinSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -740,29 +774,49 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   function handleInvest(companyId: CompanyId, amount: number) {
     const socket = socketRef.current
     if (!socket || snapshot?.phase !== 'live') return
-    setInvestmentError(null)
-    lastInteractionRef.current = Date.now()
-    setIdleHint(null)
 
+    setInvestmentError(null)
     socket.emit('team:invest', { amount, companyId }, (response: AckResponse<{ purse: number; invested: number }>) => {
       if (!response.ok) {
         setInvestmentError(response.error.message)
+        return
       }
+
+      appendTrade('buy', companyId, amount)
     })
   }
 
-  function handleWithdraw(companyId: CompanyId, amount: number) {
-    const socket = socketRef.current
-    if (!socket || snapshot?.phase !== 'live') return
-    setInvestmentError(null)
-    lastInteractionRef.current = Date.now()
-    setIdleHint(null)
+  function handleRequestSell(companyId: CompanyId, amount: number) {
+    if (amount <= 0 || amount > (currentInvestments[companyId] ?? 0)) {
+      setInvestmentError('Sell amount must stay within your current holding.')
+      return
+    }
 
-    socket.emit('team:withdraw', { amount, companyId }, (response: AckResponse<{ purse: number; invested: number }>) => {
-      if (!response.ok) {
-        setInvestmentError(response.error.message)
-      }
-    })
+    setInvestmentError(null)
+    setPendingSell({ amount, companyId })
+  }
+
+  function handleConfirmSell() {
+    const socket = socketRef.current
+    if (!socket || snapshot?.phase !== 'live' || !pendingSell) return
+
+    setPendingSellExecution(true)
+    setInvestmentError(null)
+    socket.emit(
+      'team:withdraw',
+      { amount: pendingSell.amount, companyId: pendingSell.companyId },
+      (response: AckResponse<{ purse: number; invested: number }>) => {
+        setPendingSellExecution(false)
+
+        if (!response.ok) {
+          setInvestmentError(response.error.message)
+          return
+        }
+
+        appendTrade('sell', pendingSell.companyId, pendingSell.amount)
+        setPendingSell(null)
+      },
+    )
   }
 
   function handleSubmit() {
@@ -771,7 +825,6 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
 
     setPendingSubmit(true)
     setInvestmentError(null)
-
     socket.emit('team:submit', {}, (response: AckResponse<{ investments: Record<CompanyId, number> }>) => {
       if (!response.ok) {
         setPendingSubmit(false)
@@ -785,52 +838,34 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
       <section className="team-view">
         <div className="view-intro">
           <div>
-            <span className="eyebrow">Team Console</span>
-            <h2>Join the live investment desk</h2>
-            <p>
-              Connect your team, receive the current market narrative, and lock your capital before the host closes the round.
-            </p>
+            <span className="eyebrow">Participant desk</span>
+            <h2>Connect to the trading room</h2>
+            <p>Join the live desk, receive the current market condition, and size positions before the round locks.</p>
           </div>
           <div className="chip-row">
-            <span className="shell-chip">₹1,00,000 opening cash</span>
-            <span className="shell-chip">6 companies per round</span>
-            <span className="shell-chip">Up to 12 teams</span>
+            <span className="shell-chip">Cash account enabled</span>
+            <span className="shell-chip">Six market years</span>
+            <span className="shell-chip">Shared live terminal</span>
           </div>
         </div>
 
         <div className="join-layout">
-          <section className="surface-panel hero-panel">
-            <span className="eyebrow">How it works</span>
-            <h3>Read the context, size your positions, then lock the round.</h3>
-            <p>
-              Cash stays liquid until you allocate it. Once you submit, your portfolio is frozen for scoring when the timer expires or the host ends the round early.
-            </p>
-            <div className="hero-stat-grid">
-              <div className="hero-stat">
-                <span className="mini-label">Timer control</span>
-                <strong>Host-configured</strong>
-              </div>
-              <div className="hero-stat">
-                <span className="mini-label">Signals</span>
-                <strong>Historical company narratives</strong>
-              </div>
-              <div className="hero-stat">
-                <span className="mini-label">Scoring</span>
-                <strong>Returns settle into purse balance</strong>
-              </div>
-            </div>
+          <section className="desk-panel intro-panel">
+            <span className="eyebrow">Operating notes</span>
+            <h3>Decisions stay simple.</h3>
+            <p>Review the market condition, build positions, sell only from existing holdings, and let settlement update cash when the round closes.</p>
           </section>
 
-          <section className="surface-panel join-panel">
-            <span className="eyebrow">Enter the room</span>
-            <h3>Connect your team</h3>
+          <section className="desk-panel join-panel">
+            <span className="eyebrow">Terminal access</span>
+            <h3>Link your team</h3>
             <form className="join-form" onSubmit={handleJoinSubmit}>
               <label className="field">
                 <span>Team ID</span>
                 <input
                   aria-label="Team ID"
                   autoComplete="off"
-                  placeholder="team-alpha"
+                  placeholder="desk-alpha"
                   value={formValues.teamId}
                   onChange={(event) => setFormValues((current) => ({ ...current, teamId: event.target.value }))}
                 />
@@ -840,16 +875,16 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
                 <input
                   aria-label="Team Name"
                   autoComplete="off"
-                  placeholder="The Bulls"
+                  placeholder="Alpha Desk"
                   value={formValues.name}
                   onChange={(event) => setFormValues((current) => ({ ...current, name: event.target.value }))}
                 />
               </label>
               <button className="primary-button" type="submit" disabled={connectionState === 'connecting' || connectionState === 'joining'}>
-                {connectionState === 'connecting' || connectionState === 'joining' ? 'Joining…' : 'Enter the market'}
+                {connectionState === 'connecting' || connectionState === 'joining' ? 'Linking...' : 'Enter desk'}
               </button>
             </form>
-            <p className="subtle-line">Status: {connectionLabel}</p>
+            <p className="status-line">Status: {connectionLabel}</p>
             {joinError ? <p className="message-banner error">{joinError}</p> : null}
           </section>
         </div>
@@ -862,187 +897,145 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
       {showResults && roundResults ? (
         <RoundResultsOverlay myTeamId={joinedCredentials.teamId} onDismiss={() => setShowResults(false)} results={roundResults} />
       ) : null}
+      {pendingSell ? (
+        <SellConfirmModal
+          currentCash={currentPurse}
+          onCancel={() => setPendingSell(null)}
+          onConfirm={handleConfirmSell}
+          pending={pendingSellExecution}
+          sellRequest={pendingSell}
+        />
+      ) : null}
+      {activeCall ? <FakeCallModal call={activeCall} onDismiss={() => setActiveCall(null)} /> : null}
 
       <div className="view-intro">
         <div>
-          <span className="eyebrow">Team Console</span>
+          <span className="eyebrow">Participant desk</span>
           <h2>{joinedCredentials.name}</h2>
           <p>
-            {snapshot ? `Round ${snapshot.round} of ${snapshot.totalRounds}` : 'Waiting for the host to start the game'}
-            {currentRound ? ` • ${currentRound.yearRange}` : ''}
+            {snapshot ? `Round ${snapshot.round} of ${snapshot.totalRounds}` : 'Waiting for the next market window'}
+            {displayRound ? ` • ${displayRound.yearRange}` : ''}
           </p>
         </div>
         <div className="chip-row">
           <span className={`phase-chip ${snapshot?.phase ?? 'idle'}`}>{formatPhaseLabel(snapshot?.phase ?? 'idle')}</span>
           {snapshot ? <span className="shell-chip">Timer {formatCountdown(countdownMs || snapshot.roundDurationMs)}</span> : null}
           <span className="shell-chip">{connectionLabel}</span>
-          {/* Theme switcher */}
-          <select
-            className="theme-switcher"
-            aria-label="Color theme"
-            value={activeTheme}
-            onChange={(e) => setActiveTheme(e.target.value)}
-          >
-            {THEMES.map((t) => (
-              <option key={t.id} value={t.id}>{t.label}</option>
-            ))}
-          </select>
         </div>
       </div>
 
-      <PortfolioStrip purse={currentPurse} totalInvestedAmount={totalInvestedAmount} totalValue={totalValue} />
+      <PortfolioSummary
+        purse={currentPurse}
+        settledLabel={settledLabel}
+        settledPnl={settledPnl}
+        totalInvestedAmount={totalInvestedAmount}
+        totalValue={totalValue}
+      />
 
-      {totalInvestedAmount > 0 ? <Riskometer score={riskScore} /> : null}
-
-      <section className="surface-panel story-panel" data-mood={snapshot?.marketMood ?? 'stable'}>
-        <div className="story-head">
+      <section className="market-brief-panel">
+        <div className="section-head">
           <div>
-            <span className="eyebrow">Round context</span>
-            <h3>{currentRound ? currentRound.title : 'Waiting for the next scenario'}</h3>
+            <span className="eyebrow">Market condition</span>
+            <h3>{displayRound ? displayRound.title : 'Awaiting next market year'}</h3>
           </div>
-          {currentRound ? (
-            <div className="story-timer">
-              <span className="mini-label">Countdown</span>
-              <strong>{formatCountdown(countdownMs)}</strong>
+          {displayRound ? (
+            <div className="year-badge-wrap">
+              <span className="summary-label">Visible year</span>
+              <strong className="year-badge">{displayRound.year}</strong>
             </div>
           ) : null}
         </div>
 
-        {currentRound ? (
-          <div className="story-body">
-            <div className="year-medallion">{currentRound.year}</div>
-            <p>{currentRound.context}</p>
-          </div>
+        {displayRound ? (
+          <p className="market-context">{displayRound.context}</p>
         ) : (
-          <p className="waiting-copy">
+          <p className="empty-copy">
             {snapshot?.phase === 'results'
-              ? 'The round is in scoring. Results are about to settle.'
+              ? 'Settlement is running.'
               : snapshot?.phase === 'finished'
-                ? 'The game is finished. Review the leaderboard and final results.'
-                : 'The host has not started the next round yet.'}
+                ? 'The session is closed.'
+                : 'The next market window has not opened yet.'}
           </p>
         )}
-
-        {/* Idle hint banner */}
-        {idleHint ? (
-          <div className="hint-banner" role="status">
-            <span className="hint-icon">💡</span>
-            <p>{idleHint}</p>
-            <button type="button" className="hint-dismiss" aria-label="Dismiss hint" onClick={() => setIdleHint(null)}>✕</button>
-          </div>
-        ) : null}
       </section>
 
-      {currentRound ? (
-        <section className="surface-panel opportunities-panel">
+      {displayRound ? (
+        <section className="desk-panel">
           <div className="section-head">
             <div>
-              <span className="eyebrow">Allocation board</span>
-              <h3>Build your portfolio</h3>
+              <span className="eyebrow">Holdings board</span>
+              <h3>Build and trim positions</h3>
             </div>
-            <div className="section-notes">
-              <span className="shell-chip">Configured timer {snapshot ? formatCountdown(snapshot.roundDurationMs) : '01:00.0'}</span>
+            <div className="chip-row">
+              <span className="shell-chip">{displayRound.visibleCompanyIds.length} live instruments</span>
               <span className="shell-chip">
                 {isSubmitted
-                  ? 'Submitted'
+                  ? 'Locked'
                   : canAdjustInvestments
-                    ? 'Open for changes'
+                    ? 'Editable'
                     : snapshot?.phase === 'paused'
-                      ? 'Locked while paused'
+                      ? 'Paused'
                       : 'Waiting'}
               </span>
             </div>
           </div>
 
-          <div className="opportunity-grid">
-            {COMPANY_IDS.map((companyId) => (
-              <InvestmentCard
-                key={companyId}
-                companyId={companyId}
-                signal={currentRound.companies.find((company) => company.id === companyId)}
-                invested={currentInvestments[companyId] ?? 0}
-                purse={currentPurse}
+          <div className="allocation-grid">
+            {displayRound.companies.map((company) => (
+              <AllocationCard
+                key={company.id}
+                company={company}
                 disabled={!canAdjustInvestments}
+                invested={currentInvestments[company.id] ?? 0}
                 isSubmitted={isSubmitted}
                 onInvest={handleInvest}
-                onWithdraw={handleWithdraw}
+                onRequestSell={handleRequestSell}
+                purse={currentPurse}
               />
             ))}
           </div>
-
-          <div className="submit-rail">
-            <div>
-              <span className="mini-label">Round status</span>
-              <strong>
-                {isSubmitted
-                  ? 'Your portfolio is locked for scoring.'
-                  : snapshot?.phase === 'paused'
-                    ? hasInvestments(currentInvestments)
-                      ? 'Portfolio saved — waiting for host to resume'
-                      : 'The host paused the timer. You can review but not change positions.'
-                    : snapshot?.phase === 'live'
-                      ? 'Adjust positions until you lock the round.'
-                      : 'Waiting for the next market window.'}
-              </strong>
-            </div>
-            <button className="primary-button" type="button" disabled={!canSubmit} onClick={handleSubmit}>
-              {pendingSubmit
-                ? 'Locking…'
-                : hasInvestments(currentInvestments)
-                  ? `Lock portfolio (${formatCurrency(totalInvestedAmount)})`
-                  : 'Make at least one investment'}
-            </button>
-          </div>
-
-          {/* Breakeven banner */}
-          {snapshot?.phase === 'live' && roundStartPurseRef.current > 0 ? (
-            <p className={`breakeven-banner ${gapToBreakeven > 0 ? 'behind' : 'ahead'}`}>
-              {gapToBreakeven > 0
-                ? `You're ${formatCurrency(gapToBreakeven)} away from recovering your starting position.`
-                : `You're ahead of your starting position.`}
-            </p>
-          ) : null}
-          {investmentError ? <p className="message-banner error">{investmentError}</p> : null}
         </section>
       ) : null}
 
-      {snapshot && snapshot.leaderboard.length > 0 ? (
-        <section className="surface-panel leaderboard-panel">
+      <section className="execution-grid">
+        <section className="desk-panel">
           <div className="section-head">
             <div>
-              <span className="eyebrow">Rankings</span>
-              <h3>Live leaderboard</h3>
+              <span className="eyebrow">Execution</span>
+              <h3>Round controls</h3>
             </div>
-            <span className="shell-chip">{snapshot.activeTeamsCount} active teams</span>
           </div>
-          <div className="leaderboard-list">
-            {snapshot.leaderboard.map((entry, index) => (
-              <div
-                key={entry.teamId}
-                className={`leaderboard-row ${entry.teamId === joinedCredentials.teamId ? 'me' : ''} ${!entry.connected ? 'offline' : ''}`}
-              >
-                <span className="rank-pill">#{index + 1}</span>
-                <div className="leaderboard-name">
-                  <strong>{entry.name}</strong>
-                  <span>{entry.connected ? 'Connected' : 'Disconnected'}</span>
-                </div>
-                <div className="leaderboard-value">
-                  <strong>{formatCurrency(entry.totalValue)}</strong>
-                  <span>
-                    {formatCurrency(entry.purse)} cash • {formatCurrency(totalInvested(entry.investments))} invested
-                  </span>
-                </div>
-              </div>
-            ))}
+
+          <div className="execution-summary">
+            <article className="execution-tile">
+              <span className="summary-label">Cash available</span>
+              <strong>{formatCurrency(currentPurse)}</strong>
+            </article>
+            <article className="execution-tile">
+              <span className="summary-label">Holdings deployed</span>
+              <strong>{formatCurrency(totalInvestedAmount)}</strong>
+            </article>
           </div>
+
+          <p className="execution-copy">
+            Profit is not a withdrawable balance. Only cash can be redeployed, and selling a position only returns the amount moved back into cash before settlement.
+          </p>
+
+          <button className="primary-button full-width" type="button" disabled={!canSubmit} onClick={handleSubmit}>
+            {pendingSubmit
+              ? 'Locking...'
+              : hasInvestments(currentInvestments)
+                ? `Lock portfolio (${formatCurrency(totalInvestedAmount)})`
+                : 'Add a position before locking'}
+          </button>
+
+          {investmentError ? <p className="message-banner error">{investmentError}</p> : null}
+          {serverMessage ? <p className="message-banner info">{serverMessage}</p> : null}
         </section>
-      ) : null}
 
-      {serverMessage ? <p className="message-banner info">{serverMessage}</p> : null}
-
-      <ToastStack toasts={toasts} />
+        <TradeLogPanel entries={tradeLog} />
+      </section>
     </section>
-
   )
 }
 
@@ -1076,12 +1069,9 @@ export function MarketGameShell({
       <section className="experience-shell">
         <header className="shell-header">
           <div className="brand-column">
-            <span className="eyebrow">Invest Neutron 3</span>
-            <h1>Market Masters Arena</h1>
-            <p>
-              One room for live team allocations and host control, with synced round timing, early-close controls, and
-              resilient in-memory gameplay.
-            </p>
+            <span className="eyebrow">Strategic market terminal</span>
+            <h1>Northstar Exchange</h1>
+            <p>A restrained live trading interface for participant execution and admin oversight, mapped entirely from the frontend layer.</p>
           </div>
 
           <div className="shell-action-column">
@@ -1092,7 +1082,7 @@ export function MarketGameShell({
                 aria-pressed={mode === 'team'}
                 onClick={() => handleModeChange('team')}
               >
-                Team Console
+                Participant Desk
               </button>
               <button
                 className={mode === 'host' ? 'active' : ''}
@@ -1100,14 +1090,14 @@ export function MarketGameShell({
                 aria-pressed={mode === 'host'}
                 onClick={() => handleModeChange('host')}
               >
-                Host Console
+                Admin Console
               </button>
             </div>
 
             <div className="chip-row">
-              <span className="shell-chip">6 scenario rounds</span>
-              <span className="shell-chip">12 team capacity</span>
-              <span className="shell-chip">Live timer sync</span>
+              <span className="shell-chip">Frontend remapped timeline</span>
+              <span className="shell-chip">Five to six live instruments</span>
+              <span className="shell-chip">Calm execution UI</span>
             </div>
           </div>
         </header>

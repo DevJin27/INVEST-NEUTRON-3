@@ -75,18 +75,31 @@ export function formatDuration(milliseconds: number): string {
 export function formatPhaseLabel(phase: GamePhase): string {
   switch (phase) {
     case 'idle':
-      return 'Ready'
+      return 'Standby'
     case 'live':
-      return 'Live'
+      return 'Open'
     case 'paused':
       return 'Paused'
     case 'results':
-      return 'Results'
+      return 'Settlement'
     case 'finished':
-      return 'Finished'
+      return 'Closed'
     default:
       return phase
   }
+}
+
+export function formatTimestamp(timestamp: string | number | Date): string {
+  const value = timestamp instanceof Date ? timestamp : new Date(timestamp)
+  return Number.isNaN(value.getTime())
+    ? String(timestamp)
+    : value.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+export function formatDirectionalReturn(yearlyReturn: number): string {
+  const pct = Math.round(Math.abs(yearlyReturn) * 10000) / 100
+  const arrow = yearlyReturn >= 0 ? '↑' : '↓'
+  return `${arrow} ${pct.toFixed(0)}%`
 }
 
 export function sentimentColor(sentiment: 'positive' | 'negative' | 'neutral'): string {
