@@ -271,6 +271,16 @@ class GameService {
   }
 
   async resolveRoundIfDue() {
+    const rawState = await this.store.getState();
+    if (!rawState || rawState.phase !== GAME_PHASES.LIVE) {
+      return null;
+    }
+
+    const currentState = normalizeState(rawState, this.config);
+    if (!currentState.closeAt || this.now() < currentState.closeAt) {
+      return null;
+    }
+
     return this.store.withLock(async () => {
       const state = normalizeState(await this.store.getState(), this.config);
       if (state.phase !== GAME_PHASES.LIVE) {
