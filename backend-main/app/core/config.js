@@ -1,4 +1,5 @@
 const path = require("path");
+const crypto = require("node:crypto");
 
 const {
   DEFAULT_PORT,
@@ -97,11 +98,15 @@ function loadConfig(env = process.env) {
     runtimeEnv
   );
   const databaseUrl = env.DATABASE_URL ? String(env.DATABASE_URL).trim() : "";
+  const dataPath = path.join(__dirname, "..", "..", "src", "data", "portfolio-game.json");
+  const data = require(dataPath);
+  const gameDataVersion = crypto.createHash("sha256").update(JSON.stringify(data)).digest("hex");
 
   return {
     adminSecret,
     corsOrigins: parseCorsOrigins(env.CORS_ORIGINS),
     databaseUrl,
+    gameDataVersion,
     port: parseIntegerEnv(env.PORT, DEFAULT_PORT, "PORT"),
     roundDurationMs,
     schedulerIntervalMs: parseIntegerEnv(

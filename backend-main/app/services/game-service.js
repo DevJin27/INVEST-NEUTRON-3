@@ -34,7 +34,28 @@ class GameService {
 
   async initialize() {
     await this.store.connect();
-    await this.store.initialize(createInitialState(this.config));
+    const initialState = createInitialState(this.config);
+    const currentState = await this.store.getState();
+
+    if (
+      !currentState ||
+      currentState.gameDataVersion !== initialState.gameDataVersion ||
+      currentState.totalRounds !== initialState.totalRounds
+    ) {
+      await this.store.setState(initialState);
+      this.logger.warn?.(
+        {
+          currentTotalRounds: currentState?.totalRounds ?? null,
+          expectedTotalRounds: initialState.totalRounds,
+          currentVersion: currentState?.gameDataVersion ?? null,
+          expectedVersion: initialState.gameDataVersion,
+        },
+        "resetting persisted game state to match the current round deck"
+      );
+      return;
+    }
+
+    await this.store.initialize(initialState);
   }
 
   async getCurrentState() {

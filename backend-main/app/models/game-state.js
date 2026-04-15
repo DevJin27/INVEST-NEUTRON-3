@@ -21,6 +21,7 @@ function createInitialState(config) {
   return {
     auditLog: [],
     closeAt: null,
+    gameDataVersion: config.gameDataVersion || null,
     endsAt: null,
     lastRoundResults: null,
     phase: GAME_PHASES.IDLE,
@@ -38,6 +39,7 @@ function normalizeState(rawState, config) {
 
   state.auditLog = Array.isArray(state.auditLog) ? state.auditLog.slice(-AUDIT_LOG_LIMIT) : [];
   state.closeAt = Number.isFinite(state.closeAt) ? state.closeAt : null;
+  state.gameDataVersion = typeof state.gameDataVersion === "string" ? state.gameDataVersion : (config.gameDataVersion || null);
   state.endsAt = Number.isFinite(state.endsAt) ? state.endsAt : null;
   state.lastRoundResults = state.lastRoundResults || null;
   state.phase = Object.values(GAME_PHASES).includes(state.phase) ? state.phase : GAME_PHASES.IDLE;
