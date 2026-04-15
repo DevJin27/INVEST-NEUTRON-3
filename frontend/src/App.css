@@ -44,36 +44,6 @@
   min-width: 18rem;
 }
 
-.mode-switch {
-  display: inline-grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.35rem;
-  padding: 0.35rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.mode-switch button {
-  min-width: 10rem;
-  padding: 0.85rem 1rem;
-  border-radius: 999px;
-  color: var(--text-muted);
-  background: transparent;
-  cursor: pointer;
-  transition: transform 180ms ease, background 180ms ease, color 180ms ease;
-}
-
-.mode-switch button.active {
-  color: var(--text-primary);
-  background: linear-gradient(135deg, rgba(108, 141, 255, 0.22), rgba(141, 118, 255, 0.18));
-  box-shadow: var(--glow-blue);
-}
-
-.mode-switch button:hover:not(.active) {
-  color: var(--text-secondary);
-}
-
 .chip-row {
   display: flex;
   flex-wrap: wrap;
@@ -573,14 +543,6 @@
   .shell-header,
   .team-view {
     padding: 1.2rem;
-  }
-
-  .mode-switch {
-    width: 100%;
-  }
-
-  .mode-switch button {
-    min-width: 0;
   }
 
   .portfolio-summary-grid {

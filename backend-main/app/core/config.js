@@ -1,11 +1,7 @@
 const path = require("path");
 
 const {
-  DEFAULT_LOCK_RETRY_MS,
-  DEFAULT_LOCK_TIMEOUT_MS,
-  DEFAULT_LOCK_TTL_MS,
   DEFAULT_PORT,
-  DEFAULT_REDIS_KEY_PREFIX,
   DEFAULT_ROUND_DURATION_MS,
   DEFAULT_SCHEDULER_INTERVAL_MS,
   DEFAULT_SOCKET_PING_INTERVAL_MS,
@@ -100,17 +96,13 @@ function loadConfig(env = process.env) {
     parseIntegerEnv(env.ROUND_DURATION_MS, DEFAULT_ROUND_DURATION_MS, "ROUND_DURATION_MS"),
     runtimeEnv
   );
-  const redisUrl = env.REDIS_URL ? String(env.REDIS_URL).trim() : "";
+  const databaseUrl = env.DATABASE_URL ? String(env.DATABASE_URL).trim() : "";
 
   return {
     adminSecret,
     corsOrigins: parseCorsOrigins(env.CORS_ORIGINS),
-    lockRetryMs: parseIntegerEnv(env.REDIS_LOCK_RETRY_MS, DEFAULT_LOCK_RETRY_MS, "REDIS_LOCK_RETRY_MS"),
-    lockTimeoutMs: parseIntegerEnv(env.REDIS_LOCK_TIMEOUT_MS, DEFAULT_LOCK_TIMEOUT_MS, "REDIS_LOCK_TIMEOUT_MS"),
-    lockTtlMs: parseIntegerEnv(env.REDIS_LOCK_TTL_MS, DEFAULT_LOCK_TTL_MS, "REDIS_LOCK_TTL_MS"),
+    databaseUrl,
     port: parseIntegerEnv(env.PORT, DEFAULT_PORT, "PORT"),
-    redisKeyPrefix: String(env.REDIS_KEY_PREFIX || DEFAULT_REDIS_KEY_PREFIX).trim() || DEFAULT_REDIS_KEY_PREFIX,
-    redisUrl,
     roundDurationMs,
     schedulerIntervalMs: parseIntegerEnv(
       env.SCHEDULER_INTERVAL_MS,

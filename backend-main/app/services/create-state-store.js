@@ -1,27 +1,23 @@
 const { createError } = require("../core/errors");
 const { MemoryStateStore } = require("./memory-state-store");
-const { RedisStateStore } = require("./redis-state-store");
+const { NeonStateStore } = require("./neon-state-store");
 
 function createStateStore(config, logger) {
-  if (config.redisUrl) {
-    return new RedisStateStore({
-      lockRetryMs: config.lockRetryMs,
-      lockTimeoutMs: config.lockTimeoutMs,
-      lockTtlMs: config.lockTtlMs,
+  if (config.databaseUrl) {
+    return new NeonStateStore({
+      databaseUrl: config.databaseUrl,
       logger,
-      redisKeyPrefix: config.redisKeyPrefix,
-      redisUrl: config.redisUrl,
     });
   }
 
   if (config.useInMemoryStore) {
-    logger.warn?.("REDIS_URL is not configured; using the in-memory test store.");
+    logger.warn?.("DATABASE_URL is not configured; using the in-memory test store.");
     return new MemoryStateStore();
   }
 
   throw createError("INVALID_CONFIG", {
-    name: "REDIS_URL",
-    reason: "REDIS_URL is required for non-test deployments.",
+    name: "DATABASE_URL",
+    reason: "DATABASE_URL is required for non-test deployments.",
   });
 }
 

@@ -1,9 +1,4 @@
 services:
-  - type: keyvalue
-    name: auction-game-redis
-    plan: starter
-    maxmemoryPolicy: noeviction
-    ipAllowList: []
   - type: web
     name: auction-game-server
     runtime: node
@@ -16,11 +11,8 @@ services:
         value: production
       - key: ADMIN_SECRET
         generateValue: true
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: auction-game-redis
-          property: connectionString
+      - key: DATABASE_URL
+        sync: false
       - key: CORS_ORIGINS
         value: "https://invest-neutron-3.vercel.app"
       - key: ROUND_DURATION_MS

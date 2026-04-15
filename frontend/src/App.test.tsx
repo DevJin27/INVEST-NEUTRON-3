@@ -47,37 +47,31 @@ function createRoundData(round = 1): RoundData {
         id: 'reliance',
         name: 'Reliance Industries',
         sector: 'Conglomerate',
-        newsFeed: [{ id: 'n1', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 82, headline: 'Reliance builds a new telecom thesis.', sentiment: 'positive', detail: 'Jio style infrastructure momentum is building.' }],
       },
       {
         id: 'hdfc_bank',
         name: 'HDFC Bank',
         sector: 'Banking',
-        newsFeed: [{ id: 'n2', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 88, headline: 'Deposits continue compounding.', sentiment: 'positive', detail: 'Branch expansion and credit quality remain strong.' }],
       },
       {
         id: 'infosys',
         name: 'Infosys',
         sector: 'IT',
-        newsFeed: [{ id: 'n3', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 79, headline: 'Hiring plans soften.', sentiment: 'negative', detail: 'Global demand is wobbling.' }],
       },
       {
         id: 'yes_bank',
         name: 'Yes Bank',
         sector: 'Banking',
-        newsFeed: [{ id: 'n4', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 75, headline: 'Growth is accelerating fast.', sentiment: 'positive', detail: 'Momentum is strong.' }],
       },
       {
         id: 'byjus',
         name: "Byju's",
         sector: 'EdTech',
-        newsFeed: [{ id: 'n5', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 72, headline: 'Consumer demand is building.', sentiment: 'neutral', detail: 'Adoption is climbing.' }],
       },
       {
         id: 'adani',
         name: 'Adani Group',
         sector: 'Infrastructure',
-        newsFeed: [{ id: 'n6', source: 'Reuters', sourceType: 'verified_press' as const, credibilityScore: 77, headline: 'Large projects are stacking up.', sentiment: 'positive', detail: 'Execution risk is real.' }],
       },
     ] satisfies CompanySignal[],
   }
@@ -184,9 +178,8 @@ describe('Market game shell', () => {
     window.location.hash = ''
   })
 
-  it('honors the host hash and lets users switch back to the participant desk', async () => {
+  it('honors host hash routing without rendering mode-toggle buttons', () => {
     window.location.hash = '#/host'
-    const user = userEvent.setup()
 
     render(
       <MarketGameShell
@@ -196,10 +189,8 @@ describe('Market game shell', () => {
     )
 
     expect(screen.getByRole('heading', { name: /admin access/i })).toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: /participant desk/i }))
-
-    expect(screen.getByRole('button', { name: /enter desk/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /participant desk/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /admin console/i })).not.toBeInTheDocument()
   })
 })
 

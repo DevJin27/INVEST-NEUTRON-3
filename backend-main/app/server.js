@@ -1,7 +1,6 @@
 const http = require("http");
 const { randomUUID } = require("node:crypto");
 
-const { createAdapter } = require("@socket.io/redis-adapter");
 const { Server } = require("socket.io");
 
 const { loadConfig, loadGameData, normalizeOrigin } = require("./core/config");
@@ -112,13 +111,8 @@ function createRealtimeGameServer(options = {}) {
 
     await gameService.initialize();
 
-    if (store.hasRedisAdapterClients()) {
-      const adapterClients = store.getRedisAdapterClients();
-      io.adapter(createAdapter(adapterClients.pubClient, adapterClients.subClient));
-    }
-
     socketRuntime = createSocketRuntime({
-      clusterEnabled: store.hasRedisAdapterClients(),
+      clusterEnabled: false,
       config,
       gameService,
       instanceId: randomUUID(),

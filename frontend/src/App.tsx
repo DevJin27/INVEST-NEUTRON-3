@@ -77,13 +77,6 @@ function getModeFromHash(hash: string): ShellMode {
   return hash === '#/host' ? 'host' : 'team'
 }
 
-function syncModeHash(mode: ShellMode) {
-  const nextHash = mode === 'host' ? '/host' : '/team'
-  if (window.location.hash !== `#${nextHash}`) {
-    window.location.hash = nextHash
-  }
-}
-
 function useCountdown(snapshot: CountdownState | null): number {
   const [, setTick] = useState(0)
 
@@ -1059,11 +1052,6 @@ export function MarketGameShell({
     }
   }, [])
 
-  function handleModeChange(nextMode: ShellMode) {
-    setMode(nextMode)
-    syncModeHash(nextMode)
-  }
-
   return (
     <main className="app-shell">
       <section className="experience-shell">
@@ -1075,25 +1063,6 @@ export function MarketGameShell({
           </div>
 
           <div className="shell-action-column">
-            <div className="mode-switch" role="tablist" aria-label="Workspace mode">
-              <button
-                className={mode === 'team' ? 'active' : ''}
-                type="button"
-                aria-pressed={mode === 'team'}
-                onClick={() => handleModeChange('team')}
-              >
-                Participant Desk
-              </button>
-              <button
-                className={mode === 'host' ? 'active' : ''}
-                type="button"
-                aria-pressed={mode === 'host'}
-                onClick={() => handleModeChange('host')}
-              >
-                Admin Console
-              </button>
-            </div>
-
             <div className="chip-row">
               <span className="shell-chip">Frontend remapped timeline</span>
               <span className="shell-chip">Five to six live instruments</span>
