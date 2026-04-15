@@ -201,11 +201,13 @@ function AllocationCard({
         </div>
       </div>
 
-      <div className="signal-panel">
-        <span className="signal-label">Market read</span>
-        <strong>{company.signal}</strong>
-        <p>{company.detail}</p>
-      </div>
+      {company.signal || company.detail ? (
+        <div className="signal-panel">
+          <span className="signal-label">Market read</span>
+          {company.signal && <strong>{company.signal}</strong>}
+          {company.detail && <p>{company.detail}</p>}
+        </div>
+      ) : null}
 
       {isSubmitted ? (
         <div className="locked-banner">Locked for settlement</div>
@@ -673,7 +675,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   }, [hasRequestedCredentials, socketFactory])
 
   useEffect(() => {
-    if (snapshot?.round === undefined || snapshot.round <= 0 || snapshot.phase !== 'live' || !displayRound || displayRound.calls.length === 0) {
+    if (snapshot?.round === undefined || snapshot.round <= 0 || snapshot.phase !== 'live' || !displayRound || !displayRound.calls || displayRound.calls.length === 0) {
       return
     }
 
@@ -684,7 +686,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
       }
 
       const triggerRatio = 0.35 + Math.random() * 0.35
-      const selectedCall = displayRound.calls[Math.floor(Math.random() * displayRound.calls.length)]
+      const selectedCall = displayRound.calls![Math.floor(Math.random() * displayRound.calls!.length)]
 
       return {
         call: selectedCall,

@@ -6,64 +6,12 @@
     "title": "Quiet Expansion Window",
     "context": "Capital is patient but selective. Teams are being rewarded for choosing operators that can lock distribution, liquidity, and delivery capacity before the market turns crowded.",
     "companies": [
-      {
-        "id": "a",
-        "name": "Stellarix",
-        "sector": "Orbital Infrastructure",
-        "accent": "#7ba2ff",
-        "code": "STX",
-        "signal": "Launch capacity is being accumulated before demand fully clears.",
-        "detail": "Stellarix is attracting long-cycle capital because the market prefers operators that secure infrastructure before the crowd sees the demand curve.",
-        "reveal": "Stellarix closed the year with disciplined execution. The market rewarded build quality over noise."
-      },
-      {
-        "id": "b",
-        "name": "Nobank",
-        "sector": "Autonomous Finance",
-        "accent": "#8f86ff",
-        "code": "NBK",
-        "signal": "Deposit flows are steady while credit desks stay selective.",
-        "detail": "Nobank is benefiting from a market that values trust and measured growth over aggressive balance-sheet expansion.",
-        "reveal": "Nobank put up a clean year. Stability and restraint outperformed louder balance-sheet stories."
-      },
-      {
-        "id": "c",
-        "name": "CoreStack",
-        "sector": "Compute Fabric",
-        "accent": "#5fd1ff",
-        "code": "CRS",
-        "signal": "Compute budgets are forming, but broad demand has not been released yet.",
-        "detail": "CoreStack remains in the pipeline stage for most allocators. The setup is attractive, but visibility is not public yet.",
-        "reveal": "CoreStack stayed off the public board this year. Its full repricing arrived later in the cycle."
-      },
-      {
-        "id": "d",
-        "name": "Orbis",
-        "sector": "Mobility Systems",
-        "accent": "#9ec3ff",
-        "code": "ORB",
-        "signal": "Fleet utilization is improving even as corridor growth stays uneven.",
-        "detail": "Orbis is attracting attention from teams that want resilience and route density instead of pure expansion headlines.",
-        "reveal": "Orbis delivered a solid year. Utilization held up well enough for the market to rerate consistency."
-      }
+      {"id": "a", "name": "Stellarix", "sector": "Orbital Infrastructure", "accent": "#7ba2ff", "code": "STX"},
+      {"id": "b", "name": "Nobank", "sector": "Autonomous Finance", "accent": "#8f86ff", "code": "NBK"},
+      {"id": "c", "name": "CoreStack", "sector": "Compute Fabric", "accent": "#5fd1ff", "code": "CRS"},
+      {"id": "d", "name": "Orbis", "sector": "Mobility Systems", "accent": "#9ec3ff", "code": "ORB"}
     ],
-    "calls": [
-      {
-        "id": "round-1-call-1",
-        "source": "Priority Desk",
-        "title": "Nobank overnight lines under review",
-        "body": "Two large allocators are said to be rechecking Nobank exposure before the close. If the review is real, pricing discipline will matter more than momentum.",
-        "type": "misleading"
-      }
-    ],
-    "yearlyReturn": {
-      "a": 0.15,
-      "b": 0.12,
-      "c": 0.08,
-      "d": 0.18,
-      "e": 0.25,
-      "f": 0.22
-    }
+    "yearlyReturn": { "a": -0.05, "b": 0.12, "c": -0.04, "d": 0.08, "e": 0.02, "f": -0.01 }
   },
   {
     "id": "round-2",
@@ -72,64 +20,12 @@
     "title": "Credit Compression Cycle",
     "context": "Borrowing conditions are tighter and weak operators are losing sponsorship fast. The market is rewarding teams that can hold margins without relying on easy liquidity.",
     "companies": [
-      {
-        "id": "a",
-        "name": "Stellarix",
-        "sector": "Orbital Infrastructure",
-        "accent": "#7ba2ff",
-        "code": "STX",
-        "signal": "Network operators with pricing power are getting cleaner sponsorship.",
-        "detail": "Stellarix looks better in a tighter market because scale is letting it absorb pressure without surrendering expansion posture.",
-        "reveal": "Stellarix absorbed the squeeze better than most. Scale and discipline protected the year."
-      },
-      {
-        "id": "b",
-        "name": "Nobank",
-        "sector": "Autonomous Finance",
-        "accent": "#8f86ff",
-        "code": "NBK",
-        "signal": "The best balance sheets are widening their advantage.",
-        "detail": "Nobank is being treated as a control name in a market that no longer rewards reckless expansion.",
-        "reveal": "Nobank extended its premium. Trust remained scarce and valuable."
-      },
-      {
-        "id": "c",
-        "name": "CoreStack",
-        "sector": "Compute Fabric",
-        "accent": "#5fd1ff",
-        "code": "CRS",
-        "signal": "Quiet compute contracts are forming behind closed procurement cycles.",
-        "detail": "CoreStack is still early for the public crowd, but enterprise budgets are beginning to cluster around dependable providers.",
-        "reveal": "CoreStack remained mostly pre-discovery this year. Its breakout was still waiting for a broader cycle shift."
-      },
-      {
-        "id": "d",
-        "name": "Orbis",
-        "sector": "Mobility Systems",
-        "accent": "#9ec3ff",
-        "code": "ORB",
-        "signal": "Route demand is intact, but cost control is now the deciding factor.",
-        "detail": "Orbis can win if it keeps operations tight. The market is no longer paying for velocity without durability.",
-        "reveal": "Orbis came through with a controlled year. Operational discipline mattered more than story quality."
-      }
+      {"id": "a", "name": "Stellarix", "sector": "Orbital Infrastructure", "accent": "#7ba2ff", "code": "STX"},
+      {"id": "b", "name": "Nobank", "sector": "Autonomous Finance", "accent": "#8f86ff", "code": "NBK"},
+      {"id": "c", "name": "CoreStack", "sector": "Compute Fabric", "accent": "#5fd1ff", "code": "CRS"},
+      {"id": "d", "name": "Orbis", "sector": "Mobility Systems", "accent": "#9ec3ff", "code": "ORB"}
     ],
-    "calls": [
-      {
-        "id": "round-2-call-1",
-        "source": "Crossflow Terminal",
-        "title": "GridMart demand burst may be flow-driven",
-        "body": "Desk chatter says GridMart order strength is real, but some of the move may be temporary routing flow rather than stable demand. The tape is not fully settled.",
-        "type": "partially_true"
-      }
-    ],
-    "yearlyReturn": {
-      "a": 0.18,
-      "b": 0.14,
-      "c": 0.12,
-      "d": 0.16,
-      "e": 0.20,
-      "f": 0.19
-    }
+    "yearlyReturn": { "a": 0.14, "b": -0.18, "c": 0.09, "d": -0.12, "e": 0.05, "f": 0.03 }
   },
   {
     "id": "round-3",
@@ -138,64 +34,12 @@
     "title": "Capacity Race",
     "context": "The market has moved from funding ideas to funding throughput. Operators that can convert contracts into delivered capacity are separating from everyone still pitching optionality.",
     "companies": [
-      {
-        "id": "a",
-        "name": "Stellarix",
-        "sector": "Orbital Infrastructure",
-        "accent": "#7ba2ff",
-        "code": "STX",
-        "signal": "Long-horizon operators are now judged on delivered capacity, not narratives.",
-        "detail": "Stellarix remains attractive because the market can already measure the quality of its network decisions in real operating terms.",
-        "reveal": "Stellarix delivered on throughput and kept the market onside. Tangible execution carried the year."
-      },
-      {
-        "id": "b",
-        "name": "Nobank",
-        "sector": "Autonomous Finance",
-        "accent": "#8f86ff",
-        "code": "NBK",
-        "signal": "Funding desks are rotating toward names that can underwrite risk with precision.",
-        "detail": "Nobank is holding appeal because underwriting quality is being valued more than headline loan growth.",
-        "reveal": "Nobank held its line in a faster market. Precision kept it inside the winner group."
-      },
-      {
-        "id": "c",
-        "name": "CoreStack",
-        "sector": "Compute Fabric",
-        "accent": "#5fd1ff",
-        "code": "CRS",
-        "signal": "Compute demand is strengthening, but public visibility remains delayed.",
-        "detail": "CoreStack is still not front-page flow, yet infrastructure buyers are clearly preparing for a larger deployment wave.",
-        "reveal": "CoreStack was still waiting for full public discovery. The conditions for its debut were almost in place."
-      },
-      {
-        "id": "d",
-        "name": "Orbis",
-        "sector": "Mobility Systems",
-        "accent": "#9ec3ff",
-        "code": "ORB",
-        "signal": "Mobility platforms that protect utilization are getting rerated.",
-        "detail": "Orbis is being judged on corridor economics and reliability instead of pure route count expansion.",
-        "reveal": "Orbis turned dependable utilization into a constructive close. Reliability beat expansion theater."
-      }
+      {"id": "a", "name": "Stellarix", "sector": "Orbital Infrastructure", "accent": "#7ba2ff", "code": "STX"},
+      {"id": "b", "name": "Nobank", "sector": "Autonomous Finance", "accent": "#8f86ff", "code": "NBK"},
+      {"id": "c", "name": "CoreStack", "sector": "Compute Fabric", "accent": "#5fd1ff", "code": "CRS"},
+      {"id": "d", "name": "Orbis", "sector": "Mobility Systems", "accent": "#9ec3ff", "code": "ORB"}
     ],
-    "calls": [
-      {
-        "id": "round-3-call-1",
-        "source": "Afterhours Relay",
-        "title": "NovaFuel may secure a strategic grid allocation",
-        "body": "A high-capacity allocation is being discussed around NovaFuel. If it lands, the market could move before the official print and force a rapid repricing.",
-        "type": "high-impact"
-      }
-    ],
-    "yearlyReturn": {
-      "a": 0.22,
-      "b": 0.16,
-      "c": 0.28,
-      "d": 0.20,
-      "e": 0.18,
-      "f": 0.24
-    }
+    "yearlyReturn": { "a": 0.28, "b": 0.04, "c": 0.35, "d": 0.18, "e": 0.12, "f": 0.08 }
   },
   {
     "id": "round-4",
@@ -204,84 +48,14 @@
     "title": "System Repricing",
     "context": "The market is repricing the full stack. Defensive balance sheets still matter, but compute, logistics, and energy leaders are now moving together as a connected system rather than isolated trades.",
     "companies": [
-      {
-        "id": "a",
-        "name": "Stellarix",
-        "sector": "Orbital Infrastructure",
-        "accent": "#7ba2ff",
-        "code": "STX",
-        "signal": "Infrastructure operators with execution depth remain central to the tape.",
-        "detail": "Stellarix still benefits from market preference for operators that can anchor the broader system without overextending.",
-        "reveal": "Stellarix stayed relevant even as the market widened. Its infrastructure role remained hard to replace."
-      },
-      {
-        "id": "b",
-        "name": "Nobank",
-        "sector": "Autonomous Finance",
-        "accent": "#8f86ff",
-        "code": "NBK",
-        "signal": "Funding discipline still decides who can keep scaling safely.",
-        "detail": "Nobank remains attractive because the market wants financial rails that can support growth without introducing fragility.",
-        "reveal": "Nobank remained a trusted anchor in a broader repricing cycle. Balance-sheet control mattered again."
-      },
-      {
-        "id": "c",
-        "name": "CoreStack",
-        "sector": "Compute Fabric",
-        "accent": "#5fd1ff",
-        "code": "CRS",
-        "signal": "Compute demand has crossed from anticipation into visible deployment.",
-        "detail": "CoreStack is finally on the public board, and the market is treating it as a strategic system name rather than a hidden pipeline story.",
-        "reveal": "CoreStack arrived publicly with force. Deployment visibility pulled it into the core leadership group."
-      },
-      {
-        "id": "d",
-        "name": "Orbis",
-        "sector": "Mobility Systems",
-        "accent": "#9ec3ff",
-        "code": "ORB",
-        "signal": "Mobility networks tied to real throughput are getting cleaner sponsorship.",
-        "detail": "Orbis is gaining favor because it can translate systemic demand into measurable operating leverage.",
-        "reveal": "Orbis stayed in the conversation as the system widened. Utilization quality kept it investable."
-      },
-      {
-        "id": "e",
-        "name": "GridMart",
-        "sector": "Distributed Commerce",
-        "accent": "#67e7c3",
-        "code": "GRD",
-        "signal": "Commerce infrastructure is being judged on retention and route efficiency.",
-        "detail": "GridMart has momentum, but the market is now measuring endurance more tightly than raw order growth.",
-        "reveal": "GridMart finished with a firmer profile. Efficient repeat flow mattered more than headline noise."
-      },
-      {
-        "id": "f",
-        "name": "NovaFuel",
-        "sector": "Grid Energy",
-        "accent": "#59d987",
-        "code": "NVF",
-        "signal": "Energy reliability is being repriced as a system input, not a side trade.",
-        "detail": "NovaFuel is now being valued for how it supports broader throughput across the market, which raises both upside and scrutiny.",
-        "reveal": "NovaFuel ended the year with a stronger systemic role. Energy reliability became a more valuable asset class."
-      }
+      {"id": "a", "name": "Stellarix", "sector": "Orbital Infrastructure", "accent": "#7ba2ff", "code": "STX"},
+      {"id": "b", "name": "Nobank", "sector": "Autonomous Finance", "accent": "#8f86ff", "code": "NBK"},
+      {"id": "c", "name": "CoreStack", "sector": "Compute Fabric", "accent": "#5fd1ff", "code": "CRS"},
+      {"id": "d", "name": "Orbis", "sector": "Mobility Systems", "accent": "#9ec3ff", "code": "ORB"},
+      {"id": "e", "name": "GridMart", "sector": "Distributed Commerce", "accent": "#67e7c3", "code": "GRD"},
+      {"id": "f", "name": "NovaFuel", "sector": "Grid Energy", "accent": "#59d987", "code": "NVF"}
     ],
-    "calls": [
-      {
-        "id": "round-4-call-1",
-        "source": "Night Desk",
-        "title": "CoreStack procurement wave looks larger than expected",
-        "body": "Several desks believe CoreStack has moved from pilot budgets into full deployment mandates. If confirmed, the rerating could be sharper than current positioning implies.",
-        "type": "high-impact"
-      }
-    ],
-    "yearlyReturn": {
-      "a": 0.20,
-      "b": 0.18,
-      "c": 0.35,
-      "d": 0.22,
-      "e": 0.16,
-      "f": 0.26
-    }
+    "yearlyReturn": { "a": -0.12, "b": 0.15, "c": -0.20, "d": 0.06, "e": 0.25, "f": -0.08 }
   },
   {
     "id": "round-5",
@@ -290,84 +64,14 @@
     "title": "Defensive Rotation",
     "context": "Teams are operating in a slower tape with sharper punishment for weak execution. The strongest names still attract capital, but every allocation now has to justify its resilience as well as its upside.",
     "companies": [
-      {
-        "id": "a",
-        "name": "Stellarix",
-        "sector": "Orbital Infrastructure",
-        "accent": "#7ba2ff",
-        "code": "STX",
-        "signal": "Scale remains valuable, but the market is demanding proof every quarter.",
-        "detail": "Stellarix is no longer priced as an automatic winner. Teams now need conviction around execution quality and pace.",
-        "reveal": "Stellarix held together in a tougher tape. The market paid for resilience rather than expansion fantasy."
-      },
-      {
-        "id": "b",
-        "name": "Nobank",
-        "sector": "Autonomous Finance",
-        "accent": "#8f86ff",
-        "code": "NBK",
-        "signal": "Capital is rotating back toward names that can defend trust under pressure.",
-        "detail": "Nobank is benefiting from a market that wants dependable finance rails before it wants aggressive upside.",
-        "reveal": "Nobank looked stronger as the market rotated defensive. Trust and control drove performance."
-      },
-      {
-        "id": "c",
-        "name": "CoreStack",
-        "sector": "Compute Fabric",
-        "accent": "#5fd1ff",
-        "code": "CRS",
-        "signal": "Compute deployment is real, but buyers are getting more selective.",
-        "detail": "CoreStack still has demand, though the market is beginning to distinguish between scale that converts and scale that stalls.",
-        "reveal": "CoreStack stayed onside because deployment quality remained visible. It earned its place in a stricter market."
-      },
-      {
-        "id": "d",
-        "name": "Orbis",
-        "sector": "Mobility Systems",
-        "accent": "#9ec3ff",
-        "code": "ORB",
-        "signal": "Mobility operators are being judged on retention and unit economics.",
-        "detail": "Orbis can still work, but the market now punishes weak route economics quickly and without much forgiveness.",
-        "reveal": "Orbis finished with a balanced outcome. Durability mattered more than pace."
-      },
-      {
-        "id": "e",
-        "name": "GridMart",
-        "sector": "Distributed Commerce",
-        "accent": "#67e7c3",
-        "code": "GRD",
-        "signal": "Commerce networks with real repeat traffic are separating from promotional flow.",
-        "detail": "GridMart is holding interest, but the market wants evidence that demand is habitual rather than opportunistic.",
-        "reveal": "GridMart closed the year with a measured outcome. Repeat quality determined the final move."
-      },
-      {
-        "id": "f",
-        "name": "NovaFuel",
-        "sector": "Grid Energy",
-        "accent": "#59d987",
-        "code": "NVF",
-        "signal": "Energy throughput is still strategic, though expectations are less forgiving.",
-        "detail": "NovaFuel has room to outperform if delivery remains clean, but any operational wobble will be priced immediately.",
-        "reveal": "NovaFuel stayed relevant by protecting execution. In a defensive tape, that mattered more than ambition."
-      }
+      {"id": "a", "name": "Stellarix", "sector": "Orbital Infrastructure", "accent": "#7ba2ff", "code": "STX"},
+      {"id": "b", "name": "Nobank", "sector": "Autonomous Finance", "accent": "#8f86ff", "code": "NBK"},
+      {"id": "c", "name": "CoreStack", "sector": "Compute Fabric", "accent": "#5fd1ff", "code": "CRS"},
+      {"id": "d", "name": "Orbis", "sector": "Mobility Systems", "accent": "#9ec3ff", "code": "ORB"},
+      {"id": "e", "name": "GridMart", "sector": "Distributed Commerce", "accent": "#67e7c3", "code": "GRD"},
+      {"id": "f", "name": "NovaFuel", "sector": "Grid Energy", "accent": "#59d987", "code": "NVF"}
     ],
-    "calls": [
-      {
-        "id": "round-5-call-1",
-        "source": "Control Room",
-        "title": "Stellarix order book may be flatter than desks expect",
-        "body": "Channel traffic suggests Stellarix is still stable, but some desks think growth expectations have run ahead of the actual order book. The next leg may depend on proof, not belief.",
-        "type": "misleading"
-      }
-    ],
-    "yearlyReturn": {
-      "a": 0.16,
-      "b": 0.20,
-      "c": 0.24,
-      "d": 0.14,
-      "e": 0.10,
-      "f": 0.18
-    }
+    "yearlyReturn": { "a": 0.08, "b": -0.06, "c": 0.14, "d": -0.15, "e": -0.22, "f": 0.32 }
   },
   {
     "id": "round-6",
@@ -376,83 +80,13 @@
     "title": "Late-Cycle Selection",
     "context": "The market has become unforgiving and selective. Teams are being rewarded for sizing conviction carefully, separating structural leaders from names that only looked strong in easier conditions.",
     "companies": [
-      {
-        "id": "a",
-        "name": "Stellarix",
-        "sector": "Orbital Infrastructure",
-        "accent": "#7ba2ff",
-        "code": "STX",
-        "signal": "Only operators with structural advantages are keeping premium sponsorship.",
-        "detail": "Stellarix still commands attention because its network role survives even in a highly selective environment.",
-        "reveal": "Stellarix finished as a structural name, not just a cycle name. The market kept rewarding its staying power."
-      },
-      {
-        "id": "b",
-        "name": "Nobank",
-        "sector": "Autonomous Finance",
-        "accent": "#8f86ff",
-        "code": "NBK",
-        "signal": "Finance rails that remain trusted late in the cycle are commanding a premium.",
-        "detail": "Nobank is attracting defensive capital because its discipline still reads as durable under stress.",
-        "reveal": "Nobank ended the cycle as a trusted allocator favorite. Trust outlasted volatility."
-      },
-      {
-        "id": "c",
-        "name": "CoreStack",
-        "sector": "Compute Fabric",
-        "accent": "#5fd1ff",
-        "code": "CRS",
-        "signal": "Compute leaders are being separated from the rest of the field.",
-        "detail": "CoreStack is now fully visible, and the market is deciding whether its deployment base deserves long-cycle leadership status.",
-        "reveal": "CoreStack finished the cycle with leadership credentials. Public visibility turned into durable sponsorship."
-      },
-      {
-        "id": "d",
-        "name": "Orbis",
-        "sector": "Mobility Systems",
-        "accent": "#9ec3ff",
-        "code": "ORB",
-        "signal": "Mobility flow is still tradable, but only efficient operators can keep the market.",
-        "detail": "Orbis remains in play because it can still translate route quality into performance when weaker operators are being screened out.",
-        "reveal": "Orbis closed with a credible late-cycle profile. Efficient route economics kept it investable."
-      },
-      {
-        "id": "e",
-        "name": "GridMart",
-        "sector": "Distributed Commerce",
-        "accent": "#67e7c3",
-        "code": "GRD",
-        "signal": "Commerce networks are now being judged almost entirely on retention quality.",
-        "detail": "GridMart has to prove that its throughput is habitual and sticky. The market no longer pays for loose demand.",
-        "reveal": "GridMart ended with a selective-market verdict. Sticky demand mattered far more than broad excitement."
-      },
-      {
-        "id": "f",
-        "name": "NovaFuel",
-        "sector": "Grid Energy",
-        "accent": "#59d987",
-        "code": "NVF",
-        "signal": "Energy leaders still matter, but the market is paying only for clean execution.",
-        "detail": "NovaFuel can still move materially, yet every operational assumption is now being stress-tested in real time.",
-        "reveal": "NovaFuel closed with a decisive signal. Only the cleanest throughput stories held premium pricing."
-      }
+      {"id": "a", "name": "Stellarix", "sector": "Orbital Infrastructure", "accent": "#7ba2ff", "code": "STX"},
+      {"id": "b", "name": "Nobank", "sector": "Autonomous Finance", "accent": "#8f86ff", "code": "NBK"},
+      {"id": "c", "name": "CoreStack", "sector": "Compute Fabric", "accent": "#5fd1ff", "code": "CRS"},
+      {"id": "d", "name": "Orbis", "sector": "Mobility Systems", "accent": "#9ec3ff", "code": "ORB"},
+      {"id": "e", "name": "GridMart", "sector": "Distributed Commerce", "accent": "#67e7c3", "code": "GRD"},
+      {"id": "f", "name": "NovaFuel", "sector": "Grid Energy", "accent": "#59d987", "code": "NVF"}
     ],
-    "calls": [
-      {
-        "id": "round-6-call-1",
-        "source": "Signal Relay",
-        "title": "Orbis route auction could reshape close-of-year pricing",
-        "body": "A major corridor auction is rumored to favor Orbis, but the structure is not final. If the terms hold, positioning may move before confirmation reaches the tape.",
-        "type": "partially_true"
-      }
-    ],
-    "yearlyReturn": {
-      "a": 0.18,
-      "b": 0.22,
-      "c": 0.28,
-      "d": 0.16,
-      "e": 0.12,
-      "f": 0.20
-    }
+    "yearlyReturn": { "a": 0.20, "b": 0.28, "c": -0.05, "d": 0.04, "e": -0.35, "f": 0.18 }
   }
 ]

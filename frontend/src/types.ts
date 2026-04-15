@@ -17,9 +17,9 @@ export interface CompanySignal {
   sector: string
   accent: string
   code: string
-  signal: string
-  detail: string
-  reveal: string
+  signal?: string
+  detail?: string
+  reveal?: string
 }
 
 export interface FakeCall {
