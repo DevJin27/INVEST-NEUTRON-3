@@ -2,7 +2,7 @@
  * Evaluates a team's investments against a round's actual returns.
  *
  * @param {object} roundData - The current round object from portfolio-game.json
- * @param {object} investments - { a: 5000, b: 3000, ... } amounts invested
+ * @param {object} investments - { reliance: 5000, hdfc_bank: 3000, ... } amounts invested
  * @returns {{ returns: number, totalInvested: number, percentReturn: number, breakdown: object }}
  */
 function evaluateInvestments(roundData, investments) {
@@ -16,7 +16,7 @@ function evaluateInvestments(roundData, investments) {
     const amount = investments[companyId] || 0;
     const companyReturn = returns[companyId]; // e.g., 0.15 for 15%
 
-    const companyReturns = Math.round(amount * companyReturn);
+    const companyReturns = amount === 0 ? 0 : Math.round(amount * companyReturn);
     totalReturns += companyReturns;
     totalInvested += amount;
 
