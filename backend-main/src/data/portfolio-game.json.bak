@@ -7,7 +7,7 @@
     "context": "Capital is patient but selective. Teams are being rewarded for choosing operators that can lock distribution, liquidity, and delivery capacity before the market turns crowded.",
     "companies": [
       {
-        "id": "a",
+        "id": "reliance",
         "name": "Stellarix",
         "sector": "Orbital Infrastructure",
         "accent": "#7ba2ff",
@@ -17,7 +17,7 @@
         "reveal": "Stellarix closed the year with disciplined execution. The market rewarded build quality over noise."
       },
       {
-        "id": "b",
+        "id": "hdfc_bank",
         "name": "Nobank",
         "sector": "Autonomous Finance",
         "accent": "#8f86ff",
@@ -27,7 +27,7 @@
         "reveal": "Nobank put up a clean year. Stability and restraint outperformed louder balance-sheet stories."
       },
       {
-        "id": "c",
+        "id": "infosys",
         "name": "CoreStack",
         "sector": "Compute Fabric",
         "accent": "#5fd1ff",
@@ -37,7 +37,7 @@
         "reveal": "CoreStack stayed off the public board this year. Its full repricing arrived later in the cycle."
       },
       {
-        "id": "d",
+        "id": "yes_bank",
         "name": "Orbis",
         "sector": "Mobility Systems",
         "accent": "#9ec3ff",
@@ -45,6 +45,26 @@
         "signal": "Fleet utilization is improving even as corridor growth stays uneven.",
         "detail": "Orbis is attracting attention from teams that want resilience and route density instead of pure expansion headlines.",
         "reveal": "Orbis delivered a solid year. Utilization held up well enough for the market to rerate consistency."
+      },
+      {
+        "id": "byjus",
+        "name": "GridMart",
+        "sector": "Distributed Commerce",
+        "accent": "#67e7c3",
+        "code": "GRD",
+        "signal": "Order density is building across second-wave zones.",
+        "detail": "GridMart is gaining traction where fulfillment reliability matters more than headline growth. The market is watching repeat behavior closely.",
+        "reveal": "GridMart finished stronger than expected. Reliable order flow beat early skepticism."
+      },
+      {
+        "id": "adani",
+        "name": "NovaFuel",
+        "sector": "Grid Energy",
+        "accent": "#59d987",
+        "code": "NVF",
+        "signal": "Storage commitments are improving, but delivery timing is tight.",
+        "detail": "NovaFuel is winning attention from desks that want dependable energy throughput, though late execution would quickly compress confidence.",
+        "reveal": "NovaFuel converted planning momentum into a stronger tape. Capacity that reached market on time mattered most."
       }
     ],
     "calls": [
@@ -57,12 +77,12 @@
       }
     ],
     "yearlyReturn": {
-      "a": 0.15,
-      "b": 0.12,
-      "c": 0.08,
-      "d": 0.18,
-      "e": 0.25,
-      "f": 0.22
+      "reliance": 0.15,
+      "hdfc_bank": 0.12,
+      "infosys": 0.08,
+      "yes_bank": 0.18,
+      "byjus": 0.25,
+      "adani": 0.22
     }
   },
   {
@@ -73,7 +93,7 @@
     "context": "Borrowing conditions are tighter and weak operators are losing sponsorship fast. The market is rewarding teams that can hold margins without relying on easy liquidity.",
     "companies": [
       {
-        "id": "a",
+        "id": "reliance",
         "name": "Stellarix",
         "sector": "Orbital Infrastructure",
         "accent": "#7ba2ff",
@@ -83,7 +103,7 @@
         "reveal": "Stellarix absorbed the squeeze better than most. Scale and discipline protected the year."
       },
       {
-        "id": "b",
+        "id": "hdfc_bank",
         "name": "Nobank",
         "sector": "Autonomous Finance",
         "accent": "#8f86ff",
@@ -93,7 +113,7 @@
         "reveal": "Nobank extended its premium. Trust remained scarce and valuable."
       },
       {
-        "id": "c",
+        "id": "infosys",
         "name": "CoreStack",
         "sector": "Compute Fabric",
         "accent": "#5fd1ff",
@@ -103,7 +123,7 @@
         "reveal": "CoreStack remained mostly pre-discovery this year. Its breakout was still waiting for a broader cycle shift."
       },
       {
-        "id": "d",
+        "id": "yes_bank",
         "name": "Orbis",
         "sector": "Mobility Systems",
         "accent": "#9ec3ff",
@@ -111,6 +131,26 @@
         "signal": "Route demand is intact, but cost control is now the deciding factor.",
         "detail": "Orbis can win if it keeps operations tight. The market is no longer paying for velocity without durability.",
         "reveal": "Orbis came through with a controlled year. Operational discipline mattered more than story quality."
+      },
+      {
+        "id": "byjus",
+        "name": "GridMart",
+        "sector": "Distributed Commerce",
+        "accent": "#67e7c3",
+        "code": "GRD",
+        "signal": "Commerce volume is visible, but conversion quality is mixed.",
+        "detail": "GridMart is drawing both believers and skeptics because demand is there, yet the durability of that demand is still being tested.",
+        "reveal": "GridMart produced a choppy but constructive year. Teams that sized conviction carefully were rewarded."
+      },
+      {
+        "id": "adani",
+        "name": "NovaFuel",
+        "sector": "Grid Energy",
+        "accent": "#59d987",
+        "code": "NVF",
+        "signal": "Power offtake remains firm, but leverage sensitivity is rising.",
+        "detail": "NovaFuel still has upside if execution holds, though desks are becoming less forgiving toward delayed throughput or overstretched capital plans.",
+        "reveal": "NovaFuel stayed bid when weaker operators lost sponsorship. The market kept paying for operational follow-through."
       }
     ],
     "calls": [
@@ -123,12 +163,12 @@
       }
     ],
     "yearlyReturn": {
-      "a": 0.18,
-      "b": 0.14,
-      "c": 0.12,
-      "d": 0.16,
-      "e": 0.20,
-      "f": 0.19
+      "reliance": 0.18,
+      "hdfc_bank": 0.14,
+      "infosys": 0.12,
+      "yes_bank": 0.16,
+      "byjus": 0.20,
+      "adani": 0.19
     }
   },
   {
@@ -139,7 +179,7 @@
     "context": "The market has moved from funding ideas to funding throughput. Operators that can convert contracts into delivered capacity are separating from everyone still pitching optionality.",
     "companies": [
       {
-        "id": "a",
+        "id": "reliance",
         "name": "Stellarix",
         "sector": "Orbital Infrastructure",
         "accent": "#7ba2ff",
@@ -149,7 +189,7 @@
         "reveal": "Stellarix delivered on throughput and kept the market onside. Tangible execution carried the year."
       },
       {
-        "id": "b",
+        "id": "hdfc_bank",
         "name": "Nobank",
         "sector": "Autonomous Finance",
         "accent": "#8f86ff",
@@ -159,7 +199,7 @@
         "reveal": "Nobank held its line in a faster market. Precision kept it inside the winner group."
       },
       {
-        "id": "c",
+        "id": "infosys",
         "name": "CoreStack",
         "sector": "Compute Fabric",
         "accent": "#5fd1ff",
@@ -169,7 +209,7 @@
         "reveal": "CoreStack was still waiting for full public discovery. The conditions for its debut were almost in place."
       },
       {
-        "id": "d",
+        "id": "yes_bank",
         "name": "Orbis",
         "sector": "Mobility Systems",
         "accent": "#9ec3ff",
@@ -177,6 +217,26 @@
         "signal": "Mobility platforms that protect utilization are getting rerated.",
         "detail": "Orbis is being judged on corridor economics and reliability instead of pure route count expansion.",
         "reveal": "Orbis turned dependable utilization into a constructive close. Reliability beat expansion theater."
+      },
+      {
+        "id": "byjus",
+        "name": "GridMart",
+        "sector": "Distributed Commerce",
+        "accent": "#67e7c3",
+        "code": "GRD",
+        "signal": "Fulfillment density is becoming a real competitive moat.",
+        "detail": "GridMart is benefitting from an environment where distributed delivery networks can prove their value quarter after quarter.",
+        "reveal": "GridMart translated density into a better year-end tape. Repeat performance forced the market to upgrade it."
+      },
+      {
+        "id": "adani",
+        "name": "NovaFuel",
+        "sector": "Grid Energy",
+        "accent": "#59d987",
+        "code": "NVF",
+        "signal": "Energy routing is one of the few areas still attracting aggressive capital.",
+        "detail": "NovaFuel can move fast in this environment, but only if additional capacity arrives without introducing operational strain.",
+        "reveal": "NovaFuel turned capacity expectations into a material move. The market paid up for actual flow, not promises."
       }
     ],
     "calls": [
@@ -189,12 +249,12 @@
       }
     ],
     "yearlyReturn": {
-      "a": 0.22,
-      "b": 0.16,
-      "c": 0.28,
-      "d": 0.20,
-      "e": 0.18,
-      "f": 0.24
+      "reliance": 0.22,
+      "hdfc_bank": 0.16,
+      "infosys": 0.28,
+      "yes_bank": 0.20,
+      "byjus": 0.18,
+      "adani": 0.24
     }
   },
   {
@@ -205,7 +265,7 @@
     "context": "The market is repricing the full stack. Defensive balance sheets still matter, but compute, logistics, and energy leaders are now moving together as a connected system rather than isolated trades.",
     "companies": [
       {
-        "id": "a",
+        "id": "reliance",
         "name": "Stellarix",
         "sector": "Orbital Infrastructure",
         "accent": "#7ba2ff",
@@ -215,7 +275,7 @@
         "reveal": "Stellarix stayed relevant even as the market widened. Its infrastructure role remained hard to replace."
       },
       {
-        "id": "b",
+        "id": "hdfc_bank",
         "name": "Nobank",
         "sector": "Autonomous Finance",
         "accent": "#8f86ff",
@@ -225,7 +285,7 @@
         "reveal": "Nobank remained a trusted anchor in a broader repricing cycle. Balance-sheet control mattered again."
       },
       {
-        "id": "c",
+        "id": "infosys",
         "name": "CoreStack",
         "sector": "Compute Fabric",
         "accent": "#5fd1ff",
@@ -235,7 +295,7 @@
         "reveal": "CoreStack arrived publicly with force. Deployment visibility pulled it into the core leadership group."
       },
       {
-        "id": "d",
+        "id": "yes_bank",
         "name": "Orbis",
         "sector": "Mobility Systems",
         "accent": "#9ec3ff",
@@ -245,7 +305,7 @@
         "reveal": "Orbis stayed in the conversation as the system widened. Utilization quality kept it investable."
       },
       {
-        "id": "e",
+        "id": "byjus",
         "name": "GridMart",
         "sector": "Distributed Commerce",
         "accent": "#67e7c3",
@@ -255,7 +315,7 @@
         "reveal": "GridMart finished with a firmer profile. Efficient repeat flow mattered more than headline noise."
       },
       {
-        "id": "f",
+        "id": "adani",
         "name": "NovaFuel",
         "sector": "Grid Energy",
         "accent": "#59d987",
@@ -275,12 +335,12 @@
       }
     ],
     "yearlyReturn": {
-      "a": 0.20,
-      "b": 0.18,
-      "c": 0.35,
-      "d": 0.22,
-      "e": 0.16,
-      "f": 0.26
+      "reliance": 0.20,
+      "hdfc_bank": 0.18,
+      "infosys": 0.35,
+      "yes_bank": 0.22,
+      "byjus": 0.16,
+      "adani": 0.26
     }
   },
   {
@@ -291,7 +351,7 @@
     "context": "Teams are operating in a slower tape with sharper punishment for weak execution. The strongest names still attract capital, but every allocation now has to justify its resilience as well as its upside.",
     "companies": [
       {
-        "id": "a",
+        "id": "reliance",
         "name": "Stellarix",
         "sector": "Orbital Infrastructure",
         "accent": "#7ba2ff",
@@ -301,7 +361,7 @@
         "reveal": "Stellarix held together in a tougher tape. The market paid for resilience rather than expansion fantasy."
       },
       {
-        "id": "b",
+        "id": "hdfc_bank",
         "name": "Nobank",
         "sector": "Autonomous Finance",
         "accent": "#8f86ff",
@@ -311,7 +371,7 @@
         "reveal": "Nobank looked stronger as the market rotated defensive. Trust and control drove performance."
       },
       {
-        "id": "c",
+        "id": "infosys",
         "name": "CoreStack",
         "sector": "Compute Fabric",
         "accent": "#5fd1ff",
@@ -321,7 +381,7 @@
         "reveal": "CoreStack stayed onside because deployment quality remained visible. It earned its place in a stricter market."
       },
       {
-        "id": "d",
+        "id": "yes_bank",
         "name": "Orbis",
         "sector": "Mobility Systems",
         "accent": "#9ec3ff",
@@ -331,7 +391,7 @@
         "reveal": "Orbis finished with a balanced outcome. Durability mattered more than pace."
       },
       {
-        "id": "e",
+        "id": "byjus",
         "name": "GridMart",
         "sector": "Distributed Commerce",
         "accent": "#67e7c3",
@@ -341,7 +401,7 @@
         "reveal": "GridMart closed the year with a measured outcome. Repeat quality determined the final move."
       },
       {
-        "id": "f",
+        "id": "adani",
         "name": "NovaFuel",
         "sector": "Grid Energy",
         "accent": "#59d987",
@@ -361,12 +421,12 @@
       }
     ],
     "yearlyReturn": {
-      "a": 0.16,
-      "b": 0.20,
-      "c": 0.24,
-      "d": 0.14,
-      "e": 0.10,
-      "f": 0.18
+      "reliance": 0.16,
+      "hdfc_bank": 0.20,
+      "infosys": 0.24,
+      "yes_bank": 0.14,
+      "byjus": 0.10,
+      "adani": 0.18
     }
   },
   {
@@ -377,7 +437,7 @@
     "context": "The market has become unforgiving and selective. Teams are being rewarded for sizing conviction carefully, separating structural leaders from names that only looked strong in easier conditions.",
     "companies": [
       {
-        "id": "a",
+        "id": "reliance",
         "name": "Stellarix",
         "sector": "Orbital Infrastructure",
         "accent": "#7ba2ff",
@@ -387,7 +447,7 @@
         "reveal": "Stellarix finished as a structural name, not just a cycle name. The market kept rewarding its staying power."
       },
       {
-        "id": "b",
+        "id": "hdfc_bank",
         "name": "Nobank",
         "sector": "Autonomous Finance",
         "accent": "#8f86ff",
@@ -397,7 +457,7 @@
         "reveal": "Nobank ended the cycle as a trusted allocator favorite. Trust outlasted volatility."
       },
       {
-        "id": "c",
+        "id": "infosys",
         "name": "CoreStack",
         "sector": "Compute Fabric",
         "accent": "#5fd1ff",
@@ -407,7 +467,7 @@
         "reveal": "CoreStack finished the cycle with leadership credentials. Public visibility turned into durable sponsorship."
       },
       {
-        "id": "d",
+        "id": "yes_bank",
         "name": "Orbis",
         "sector": "Mobility Systems",
         "accent": "#9ec3ff",
@@ -417,7 +477,7 @@
         "reveal": "Orbis closed with a credible late-cycle profile. Efficient route economics kept it investable."
       },
       {
-        "id": "e",
+        "id": "byjus",
         "name": "GridMart",
         "sector": "Distributed Commerce",
         "accent": "#67e7c3",
@@ -427,7 +487,7 @@
         "reveal": "GridMart ended with a selective-market verdict. Sticky demand mattered far more than broad excitement."
       },
       {
-        "id": "f",
+        "id": "adani",
         "name": "NovaFuel",
         "sector": "Grid Energy",
         "accent": "#59d987",
@@ -447,12 +507,12 @@
       }
     ],
     "yearlyReturn": {
-      "a": 0.18,
-      "b": 0.22,
-      "c": 0.28,
-      "d": 0.16,
-      "e": 0.12,
-      "f": 0.20
+      "reliance": 0.18,
+      "hdfc_bank": 0.22,
+      "infosys": 0.28,
+      "yes_bank": 0.16,
+      "byjus": 0.12,
+      "adani": 0.20
     }
   }
 ]

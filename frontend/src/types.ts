@@ -1,8 +1,8 @@
 export type GamePhase = 'idle' | 'live' | 'paused' | 'results' | 'finished'
 
-export type CompanyId = 'reliance' | 'hdfc_bank' | 'infosys' | 'yes_bank' | 'byjus' | 'adani'
+export type CompanyId = 'a' | 'b' | 'c' | 'd' | 'e' | 'f'
 
-export const COMPANY_IDS: CompanyId[] = ['reliance', 'hdfc_bank', 'infosys', 'yes_bank', 'byjus', 'adani']
+export const COMPANY_IDS: CompanyId[] = ['a', 'b', 'c', 'd', 'e', 'f']
 
 export type Investments = Record<CompanyId, number>
 
@@ -15,6 +15,19 @@ export interface CompanySignal {
   id: CompanyId
   name: string
   sector: string
+  accent: string
+  code: string
+  signal: string
+  detail: string
+  reveal: string
+}
+
+export interface FakeCall {
+  id: string
+  source: string
+  title: string
+  body: string
+  type: 'misleading' | 'partially_true' | 'high-impact'
 }
 
 export interface RoundData {
@@ -24,6 +37,7 @@ export interface RoundData {
   title: string
   context: string
   companies: CompanySignal[]
+  calls?: FakeCall[]
 }
 
 export interface LeaderboardEntry {
