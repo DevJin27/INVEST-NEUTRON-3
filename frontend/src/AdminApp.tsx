@@ -30,6 +30,47 @@ import {
   totalInvested,
 } from './utils'
 
+const ADMIN_SESSION_STORAGE_KEY = 'auction-admin-session'
+
+interface StoredAdminSession {
+  secret: string
+  snapshot: AdminSnapshot
+}
+
+function readStoredAdminSession(): StoredAdminSession | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.sessionStorage.getItem(ADMIN_SESSION_STORAGE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as Partial<StoredAdminSession>
+    if (typeof parsed.secret !== 'string' || !parsed.snapshot || typeof parsed.snapshot !== 'object') return null
+
+    return {
+      secret: parsed.secret,
+      snapshot: parsed.snapshot as AdminSnapshot,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeStoredAdminSession(session: StoredAdminSession | null) {
+  if (typeof window === 'undefined') return
+
+  try {
+    if (session) {
+      window.sessionStorage.setItem(ADMIN_SESSION_STORAGE_KEY, JSON.stringify(session))
+      return
+    }
+
+    window.sessionStorage.removeItem(ADMIN_SESSION_STORAGE_KEY)
+  } catch {
+    // Ignore storage failures so the dashboard still works when storage is blocked.
+  }
+}
+
 type SocketFactory = () => SocketLike
 type InferredTradeAction = 'buy' | 'sell'
 
@@ -151,11 +192,12 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
   const socketRef = useRef<SocketLike | null>(null)
   const prevSnapshotRef = useRef<AdminSnapshot | null>(null)
   const durationDirtyRef = useRef(false)
+  const storedSession = readStoredAdminSession()
 
-  const [secret, setSecret] = useState('')
-  const [snapshot, setSnapshot] = useState<AdminSnapshot | null>(null)
+  const [secret, setSecret] = useState(() => storedSession?.secret ?? '')
+  const [snapshot, setSnapshot] = useState<AdminSnapshot | null>(() => storedSession?.snapshot ?? null)
   const [roundResults, setRoundResults] = useState<RoundResults | null>(null)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(() => storedSession !== null)
   const [authError, setAuthError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [actionMessage, setActionMessage] = useState<string | null>(null)
@@ -174,6 +216,12 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
   useEffect(() => {
     durationDirtyRef.current = durationDirty
   }, [durationDirty])
+
+  useEffect(() => {
+    if (isAuthenticated && snapshot) {
+      writeStoredAdminSession({ secret, snapshot })
+    }
+  }, [isAuthenticated, secret, snapshot])
 
   useEffect(() => {
     const socket = socketFactory()
@@ -257,9 +305,13 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
           setDurationSeconds(String(Math.max(1, Math.round(response.data.snapshot.roundDurationMs / 1000))))
           setDurationDirty(false)
           setActionMessage('Admin console connected.')
+          writeStoredAdminSession({ secret, snapshot: response.data.snapshot })
           return
         }
 
+        writeStoredAdminSession(null)
+        setIsAuthenticated(false)
+        setSnapshot(null)
         setAuthError(response.ok ? 'Authentication failed.' : response.error.message)
       },
     )

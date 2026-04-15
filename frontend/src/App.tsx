@@ -73,6 +73,42 @@ const EMPTY_SUBMISSION: ViewerSubmission = {
   canSubmit: false,
 }
 
+const TEAM_SESSION_STORAGE_KEY = 'auction-team-session'
+
+function readStoredTeamCredentials(): TeamCredentials | null {
+  if (typeof window === 'undefined') return null
+
+  try {
+    const raw = window.localStorage.getItem(TEAM_SESSION_STORAGE_KEY)
+    if (!raw) return null
+
+    const parsed = JSON.parse(raw) as Partial<TeamCredentials>
+    if (typeof parsed.teamId !== 'string' || typeof parsed.name !== 'string') return null
+
+    return {
+      teamId: parsed.teamId,
+      name: parsed.name,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeStoredTeamCredentials(credentials: TeamCredentials | null) {
+  if (typeof window === 'undefined') return
+
+  try {
+    if (credentials) {
+      window.localStorage.setItem(TEAM_SESSION_STORAGE_KEY, JSON.stringify(credentials))
+      return
+    }
+
+    window.localStorage.removeItem(TEAM_SESSION_STORAGE_KEY)
+  } catch {
+    // Ignore storage failures so login still works in private or restricted modes.
+  }
+}
+
 function getModeFromHash(hash: string): ShellMode {
   return hash === '#/host' ? 'host' : 'team'
 }
@@ -485,10 +521,12 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const requestedCredentialsRef = useRef<TeamCredentials | null>(null)
   const joinedCredentialsRef = useRef<TeamCredentials | null>(null)
 
-  const [formValues, setFormValues] = useState({ teamId: '', name: '' })
-  const [requestedCredentials, setRequestedCredentials] = useState<TeamCredentials | null>(null)
-  const [joinedCredentials, setJoinedCredentials] = useState<TeamCredentials | null>(null)
-  const [connectionState, setConnectionState] = useState<ConnectionState>('idle')
+  const [formValues, setFormValues] = useState(() => readStoredTeamCredentials() ?? { teamId: '', name: '' })
+  const [requestedCredentials, setRequestedCredentials] = useState<TeamCredentials | null>(() => readStoredTeamCredentials())
+  const [joinedCredentials, setJoinedCredentials] = useState<TeamCredentials | null>(() => readStoredTeamCredentials())
+  const [connectionState, setConnectionState] = useState<ConnectionState>(() =>
+    readStoredTeamCredentials() ? 'reconnecting' : 'idle',
+  )
   const [snapshot, setSnapshot] = useState<GameSnapshot | null>(null)
   const [joinError, setJoinError] = useState<string | null>(null)
   const [serverMessage, setServerMessage] = useState<string | null>(null)
@@ -511,6 +549,10 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   useEffect(() => {
     joinedCredentialsRef.current = joinedCredentials
   }, [joinedCredentials])
+
+  useEffect(() => {
+    writeStoredTeamCredentials(joinedCredentials ?? requestedCredentials)
+  }, [joinedCredentials, requestedCredentials])
 
   useEffect(() => {
     if (snapshot?.phase === 'live' || snapshot?.phase === 'paused' || snapshot?.phase === 'idle') {
@@ -571,13 +613,19 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
             return
           }
 
+          setJoinError(response.error.message)
+          setRequestedCredentials(null)
+          setJoinedCredentials(null)
+          requestedCredentialsRef.current = null
+          joinedCredentialsRef.current = null
+          writeStoredTeamCredentials(null)
+
           if (reconnecting) {
             setServerMessage(response.error.message)
-            setConnectionState('reconnecting')
+            setConnectionState('idle')
             return
           }
 
-          setJoinError(response.error.message)
           setConnectionState(socket.connected ? 'idle' : 'connecting')
         },
       )
@@ -761,6 +809,11 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
         }
 
         setJoinError(response.error.message)
+        setRequestedCredentials(null)
+        setJoinedCredentials(null)
+        requestedCredentialsRef.current = null
+        joinedCredentialsRef.current = null
+        writeStoredTeamCredentials(null)
         setConnectionState('idle')
       },
     )
