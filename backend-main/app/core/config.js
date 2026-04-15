@@ -140,8 +140,10 @@ function validateGameData(data, companyIds) {
     });
   }
 
-  const requiredRoundFields = ["id", "year", "title", "context", "companies", "yearlyReturn", "yearEndReveal"];
-  const requiredCompanyFields = ["id", "name", "sector", "newsFeed"];
+  const requiredRoundFields = ["id", "year", "title", "context", "companies", "yearlyReturn"];
+  const optionalRoundFields = ["yearEndReveal"];
+  const requiredCompanyFields = ["id", "name", "sector"];
+  const optionalCompanyFields = ["newsFeed"];
   const validSourceTypes = ["verified_press", "social_rumor", "sponsored_content", "analyst_note"];
 
   for (let roundIndex = 0; roundIndex < data.length; roundIndex += 1) {
@@ -174,33 +176,36 @@ function validateGameData(data, companyIds) {
         throw createError("INVALID_SIGNAL_DECK", { reason: `Unknown company id: ${company.id}` });
       }
 
-      if (!Array.isArray(company.newsFeed) || company.newsFeed.length === 0) {
-        throw createError("INVALID_SIGNAL_DECK", {
-          reason: `Round ${roundIndex + 1}, company ${company.id} must have newsFeed array.`,
-        });
-      }
-
-      for (const news of company.newsFeed) {
-        if (!news.id || !news.headline || !news.detail || !news.source) {
+      // Validate newsFeed only if present (optional field)
+      if (company.newsFeed) {
+        if (!Array.isArray(company.newsFeed) || company.newsFeed.length === 0) {
           throw createError("INVALID_SIGNAL_DECK", {
-            reason: `Round ${roundIndex + 1}, company ${company.id} has invalid news item.`,
+            reason: `Round ${roundIndex + 1}, company ${company.id} newsFeed must be non-empty array.`,
           });
         }
 
-        if (!validSourceTypes.includes(news.sourceType)) {
-          throw createError("INVALID_SIGNAL_DECK", {
-            reason: `Round ${roundIndex + 1}, company ${company.id} news item ${news.id} has invalid sourceType.`,
-          });
-        }
+        for (const news of company.newsFeed) {
+          if (!news.id || !news.headline || !news.detail || !news.source) {
+            throw createError("INVALID_SIGNAL_DECK", {
+              reason: `Round ${roundIndex + 1}, company ${company.id} has invalid news item.`,
+            });
+          }
 
-        if (
-          typeof news.credibilityScore !== "number" ||
-          news.credibilityScore < 0 ||
-          news.credibilityScore > 100
-        ) {
-          throw createError("INVALID_SIGNAL_DECK", {
-            reason: `Round ${roundIndex + 1}, company ${company.id} news item ${news.id} has invalid credibilityScore.`,
-          });
+          if (!validSourceTypes.includes(news.sourceType)) {
+            throw createError("INVALID_SIGNAL_DECK", {
+              reason: `Round ${roundIndex + 1}, company ${company.id} news item ${news.id} has invalid sourceType.`,
+            });
+          }
+
+          if (
+            typeof news.credibilityScore !== "number" ||
+            news.credibilityScore < 0 ||
+            news.credibilityScore > 100
+          ) {
+            throw createError("INVALID_SIGNAL_DECK", {
+              reason: `Round ${roundIndex + 1}, company ${company.id} news item ${news.id} has invalid credibilityScore.`,
+            });
+          }
         }
       }
     }
