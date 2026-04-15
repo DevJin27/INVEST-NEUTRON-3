@@ -10,8 +10,8 @@ import {
   getDisplayYearLabel,
   getVisibleCompanyIds,
   type DisplayCompanyView,
-  type FakeCallScript,
 } from './display'
+import type { FakeCall } from './types'
 import { createSocketClient } from './socket-client'
 import type {
   AckResponse,
@@ -60,7 +60,7 @@ interface PendingSellState {
 }
 
 interface ScheduledCallState {
-  call: FakeCallScript
+  call: FakeCall
   round: number
   shown: boolean
   triggerElapsedMs: number
@@ -460,7 +460,7 @@ function FakeCallModal({
   call,
   onDismiss,
 }: {
-  call: FakeCallScript
+  call: FakeCall
   onDismiss: () => void
 }) {
   return (
@@ -502,7 +502,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const [tradeLog, setTradeLog] = useState<SessionTradeEntry[]>([])
   const [pendingSell, setPendingSell] = useState<PendingSellState | null>(null)
   const [scheduledCall, setScheduledCall] = useState<ScheduledCallState | null>(null)
-  const [activeCall, setActiveCall] = useState<FakeCallScript | null>(null)
+  const [activeCall, setActiveCall] = useState<FakeCall | null>(null)
 
   useEffect(() => {
     requestedCredentialsRef.current = requestedCredentials
@@ -522,7 +522,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const hasRequestedCredentials = requestedCredentials !== null
   const viewerSubmission = snapshot?.viewerSubmission ?? EMPTY_SUBMISSION
   const currentRound = snapshot?.currentRound ?? null
-  const displayRound = useMemo(() => buildDisplayRound(currentRound, snapshot?.round ?? 0), [currentRound, snapshot?.round])
+  const displayRound = useMemo(() => buildDisplayRound(currentRound), [currentRound])
   const myTeamData = snapshot?.leaderboard.find((entry) => entry.teamId === joinedCredentials?.teamId) ?? null
   const currentPurse = myTeamData?.purse ?? localPurse
   const currentInvestments = myTeamData?.investments ?? localInvestments

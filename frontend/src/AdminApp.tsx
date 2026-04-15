@@ -169,7 +169,7 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
 
   const countdownMs = useCountdown(snapshot)
   const currentResults = roundResults ?? snapshot?.lastRoundResults ?? null
-  const displayRound = useMemo(() => buildDisplayRound(snapshot?.currentRound ?? null, snapshot?.round ?? 0), [snapshot?.currentRound, snapshot?.round])
+  const displayRound = useMemo(() => buildDisplayRound(snapshot?.currentRound ?? null), [snapshot?.currentRound])
 
   useEffect(() => {
     durationDirtyRef.current = durationDirty

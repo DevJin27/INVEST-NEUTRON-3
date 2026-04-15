@@ -38,40 +38,52 @@ function createInvestments(overrides: Partial<Investments> = {}): Investments {
 function createRoundData(round = 1): RoundData {
   return {
     id: `round-${round}`,
-    year: 2012,
-    yearRange: '2012',
-    title: 'India Rising',
-    context: 'Reliance and HDFC Bank dominate the 2012 narrative while India growth accelerates.',
+    year: 2028,
+    yearRange: '2028',
+    title: 'Market Opening',
+    context: 'Six companies enter the market with distinct value propositions and growth trajectories.',
     companies: [
       {
-        id: 'reliance',
-        name: 'Reliance Industries',
-        sector: 'Conglomerate',
+        id: 'a',
+        name: 'Stellarix',
+        sector: 'Orbital Infrastructure',
+        accent: '#7ba2ff',
+        code: 'STX',
       },
       {
-        id: 'hdfc_bank',
-        name: 'HDFC Bank',
-        sector: 'Banking',
+        id: 'b',
+        name: 'Nobank',
+        sector: 'Autonomous Finance',
+        accent: '#8f86ff',
+        code: 'NBK',
       },
       {
-        id: 'infosys',
-        name: 'Infosys',
-        sector: 'IT',
+        id: 'c',
+        name: 'CoreStack',
+        sector: 'Compute Fabric',
+        accent: '#5fd1ff',
+        code: 'CRS',
       },
       {
-        id: 'yes_bank',
-        name: 'Yes Bank',
-        sector: 'Banking',
+        id: 'd',
+        name: 'Orbis',
+        sector: 'Mobility Systems',
+        accent: '#9ec3ff',
+        code: 'ORB',
       },
       {
-        id: 'byjus',
-        name: "Byju's",
-        sector: 'EdTech',
+        id: 'e',
+        name: 'GridMart',
+        sector: 'Distributed Commerce',
+        accent: '#67e7c3',
+        code: 'GRD',
       },
       {
-        id: 'adani',
-        name: 'Adani Group',
-        sector: 'Infrastructure',
+        id: 'f',
+        name: 'NovaFuel',
+        sector: 'Grid Energy',
+        accent: '#59d987',
+        code: 'NVF',
       },
     ] satisfies CompanySignal[],
   }
@@ -394,7 +406,7 @@ describe('TeamDashboardApp', () => {
     expect(screen.getByText('Orbis')).toBeInTheDocument()
     expect(screen.queryByText('CoreStack')).not.toBeInTheDocument()
     expect(screen.getByText('2028')).toBeInTheDocument()
-    expect(screen.queryByText(/Reliance Industries/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Stellarix/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/2012/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/leaderboard/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/portfolio confidence/i)).not.toBeInTheDocument()
@@ -462,7 +474,7 @@ describe('TeamDashboardApp', () => {
 
     await user.click(screen.getByRole('button', { name: /confirm sale/i }))
 
-    expect(socket.getLastPayload('team:withdraw')).toEqual({ amount: 2000, companyId: 'reliance' })
+    expect(socket.getLastPayload('team:withdraw')).toEqual({ amount: 2000, companyId: 'a' })
   })
 
   it('appends confirmed buy and sell actions to the participant trade log', async () => {
