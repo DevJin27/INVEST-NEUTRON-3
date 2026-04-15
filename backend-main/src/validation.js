@@ -93,8 +93,8 @@ function validateGameData(data) {
     });
   }
 
-  const requiredRoundFields = ['id', 'year', 'title', 'context', 'companies', 'yearlyReturn', 'yearEndReveal'];
-  const requiredCompanyFields = ['id', 'name', 'sector', 'newsFeed'];
+  const requiredRoundFields = ['id', 'year', 'yearRange', 'title', 'context', 'companies', 'yearlyReturn'];
+  const requiredCompanyFields = ['id', 'name', 'sector', 'accent', 'code'];
 
   for (let i = 0; i < data.length; i++) {
     const round = data[i];
@@ -116,21 +116,6 @@ function validateGameData(data) {
         throw createError('INVALID_SIGNAL_DECK', { reason: `Unknown company id: ${company.id}` });
       }
       
-      if (!Array.isArray(company.newsFeed) || company.newsFeed.length === 0) {
-        throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} must have newsFeed array.` });
-      }
-      for (const news of company.newsFeed) {
-        if (!news.id || !news.headline || !news.detail || !news.source) {
-          throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} has invalid news item.` });
-        }
-        const validSourceTypes = ['verified_press', 'social_rumor', 'sponsored_content', 'analyst_note'];
-        if (!validSourceTypes.includes(news.sourceType)) {
-          throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} news item ${news.id} has invalid sourceType.` });
-        }
-        if (typeof news.credibilityScore !== 'number' || news.credibilityScore < 0 || news.credibilityScore > 100) {
-          throw createError('INVALID_SIGNAL_DECK', { reason: `Round ${i + 1}, company ${company.id} news item ${news.id} has invalid credibilityScore.` });
-        }
-      }
     }
 
     for (const companyId of COMPANY_IDS) {

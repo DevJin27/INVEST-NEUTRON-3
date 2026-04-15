@@ -5,25 +5,25 @@ describe("portfolio scoring", () => {
   it("calculates returns and percentages from invested amounts", () => {
     const round = defaultRounds[0];
     const result = evaluateInvestments(round, {
-      reliance: 1000,
-      hdfc_bank: 2000,
-      infosys: 0,
-      yes_bank: 3000,
-      byjus: 0,
-      adani: 4000,
+      a: 1000,
+      b: 2000,
+      c: 0,
+      d: 3000,
+      e: 0,
+      f: 4000,
     });
 
     expect(result).toEqual({
-      returns: 2580,
+      returns: 390,
       totalInvested: 10000,
-      percentReturn: 25.8,
+      percentReturn: 3.9,
       breakdown: {
-        reliance: { invested: 1000, yearlyReturn: 0.12, returns: 120 },
-        hdfc_bank: { invested: 2000, yearlyReturn: 0.28, returns: 560 },
-        infosys: { invested: 0, yearlyReturn: 0.1, returns: 0 },
-        yes_bank: { invested: 3000, yearlyReturn: 0.42, returns: 1260 },
-        byjus: { invested: 0, yearlyReturn: 0.75, returns: 0 },
-        adani: { invested: 4000, yearlyReturn: 0.16, returns: 640 },
+        a: { invested: 1000, yearlyReturn: -0.05, returns: -50 },
+        b: { invested: 2000, yearlyReturn: 0.12, returns: 240 },
+        c: { invested: 0, yearlyReturn: -0.04, returns: 0 },
+        d: { invested: 3000, yearlyReturn: 0.08, returns: 240 },
+        e: { invested: 0, yearlyReturn: 0.02, returns: 0 },
+        f: { invested: 4000, yearlyReturn: -0.01, returns: -40 },
       },
     });
   });

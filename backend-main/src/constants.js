@@ -1,6 +1,6 @@
 const TEAM_LIMIT = 12;
 const TOTAL_ROUNDS = 6;
-const COMPANY_IDS = ['reliance', 'hdfc_bank', 'infosys', 'yes_bank', 'byjus', 'adani'];
+const COMPANY_IDS = ['a', 'b', 'c', 'd', 'e', 'f'];
 const STARTING_PURSE_VALUE = 100000; // ₹1,00,000 starting cash in purse
 const DEFAULT_PORT = 3000;
 const DEFAULT_ROUND_DURATION_MS = 60000; // 60 seconds for investment decisions

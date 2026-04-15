@@ -5,12 +5,12 @@ const { GameEngine } = require("../src/game-engine");
 
 function blankInvestments(overrides = {}) {
   return {
-    reliance: 0,
-    hdfc_bank: 0,
-    infosys: 0,
-    yes_bank: 0,
-    byjus: 0,
-    adani: 0,
+    a: 0,
+    b: 0,
+    c: 0,
+    d: 0,
+    e: 0,
+    f: 0,
     ...overrides,
   };
 }
@@ -80,7 +80,7 @@ describe("game engine timers and state", () => {
 
     engine.joinTeam({ name: "Team 1", socketId: "socket-1", teamId: "team-1" });
     engine.startGame();
-    engine.invest({ amount: 5000, companyId: "reliance", socketId: "socket-1" });
+    engine.invest({ amount: 5000, companyId: "a", socketId: "socket-1" });
     engine.submitInvestments({ socketId: "socket-1" });
     engine.disconnectSocket("socket-1");
     engine.joinTeam({ name: "Team 1", socketId: "socket-2", teamId: "team-1" });
@@ -90,7 +90,7 @@ describe("game engine timers and state", () => {
     expect(snapshot.viewerSubmission).toEqual({
       canSubmit: false,
       hasSubmitted: true,
-      investments: blankInvestments({ reliance: 5000 }),
+      investments: blankInvestments({ a: 5000 }),
       teamId: "team-1",
     });
   });

@@ -2,7 +2,7 @@
  * Evaluates a team's investments against a round's actual returns.
  *
  * @param {object} roundData - The current round object from portfolio-game.json
- * @param {object} investments - { reliance: 5000, hdfc_bank: 3000, ... } amounts invested
+ * @param {object} investments - { a: 5000, b: 3000, ... } amounts invested
  * @returns {{ returns: number, totalInvested: number, percentReturn: number, breakdown: object }}
  */
 function evaluateInvestments(roundData, investments) {

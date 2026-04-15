@@ -146,7 +146,7 @@ describe("HTTP and socket integration", () => {
     const startResponse = await emitWithAck(adminSocket, "admin:start-game");
     expect(startResponse.ok).toBe(true);
 
-    const investResponse = await emitWithAck(teamSocket, "team:invest", { amount: 5000, companyId: "reliance" });
+    const investResponse = await emitWithAck(teamSocket, "team:invest", { amount: 5000, companyId: "a" });
     expect(investResponse.ok).toBe(true);
 
     const submitResponse = await emitWithAck(teamSocket, "team:submit");
@@ -182,12 +182,12 @@ describe("HTTP and socket integration", () => {
       canSubmit: false,
       hasSubmitted: true,
       investments: {
-        adani: 0,
-        byjus: 0,
-        hdfc_bank: 0,
-        infosys: 0,
-        reliance: 5000,
-        yes_bank: 0,
+        a: 5000,
+        b: 0,
+        c: 0,
+        d: 0,
+        e: 0,
+        f: 0,
       },
       teamId: "blue",
     });
