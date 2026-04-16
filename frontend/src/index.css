@@ -145,7 +145,8 @@ textarea::placeholder {
 .primary-inline-button,
 .secondary-inline-button {
   border-radius: 999px;
-  padding: 0.92rem 1.2rem;
+  padding: 1rem 1.35rem;
+  min-height: 3rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -173,12 +174,19 @@ textarea::placeholder {
   transform: scale(1.01);
 }
 
+.primary-button:active:not(:disabled),
+.secondary-button:active:not(:disabled),
+.primary-inline-button:active:not(:disabled),
+.secondary-inline-button:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
 .primary-button:disabled,
 .secondary-button:disabled,
 .primary-inline-button:disabled,
 .secondary-inline-button:disabled {
   cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.62;
   box-shadow: none;
 }
 
@@ -202,6 +210,7 @@ textarea::placeholder {
   color: #ffc2c7;
   background: var(--accent-red-soft);
   border-color: rgba(255, 139, 150, 0.18);
+  animation: field-shake 180ms ease-in-out 1;
 }
 
 .message-banner.info {
@@ -210,7 +219,6 @@ textarea::placeholder {
   border-color: rgba(108, 141, 255, 0.18);
 }
 
-.shell-chip,
 .phase-chip,
 .ticker-pill,
 .secondary-chip {
@@ -220,14 +228,6 @@ textarea::placeholder {
   gap: 0.35rem;
   border-radius: 999px;
   font-family: var(--font-mono);
-}
-
-.shell-chip {
-  padding: 0.5rem 0.85rem;
-  font-size: 0.75rem;
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--border-soft);
 }
 
 .phase-chip {
@@ -314,6 +314,36 @@ textarea::placeholder {
 .status-line {
   margin: 0;
   color: var(--text-muted);
+}
+
+.field-error input,
+.field-error select,
+.field-error textarea {
+  border-color: rgba(255, 139, 150, 0.58);
+  box-shadow: 0 0 0 3px rgba(255, 139, 150, 0.14);
+  animation: field-shake 180ms ease-in-out 1;
+}
+
+.panel-error {
+  border-color: rgba(255, 139, 150, 0.35) !important;
+  box-shadow: 0 0 0 1px rgba(255, 139, 150, 0.24), var(--shadow-soft);
+}
+
+@keyframes field-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-banner.error,
+  .field-error input,
+  .field-error select,
+  .field-error textarea {
+    animation: none;
+  }
 }
 
 @media (max-width: 720px) {

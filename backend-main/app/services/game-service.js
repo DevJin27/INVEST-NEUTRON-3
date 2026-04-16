@@ -341,6 +341,28 @@ class GameService {
     });
   }
 
+  async clearTeams() {
+    return this.store.withLock(async () => {
+      const state = normalizeState(await this.store.getState(), this.config);
+      if (state.phase === GAME_PHASES.LIVE || state.phase === GAME_PHASES.PAUSED) {
+        throw createError("INVALID_PHASE", {
+          phase: state.phase,
+          reason: "Cannot clear teams during a live round.",
+        });
+      }
+
+      state.teams = {};
+      state.submissions = {};
+
+      await this.store.setState(state);
+      return {
+        cleared: true,
+        leaderboard: [],
+        teams: {},
+      };
+    });
+  }
+
   async setPurseValue(payload) {
     return this.store.withLock(async () => {
       const state = normalizeState(await this.store.getState(), this.config);

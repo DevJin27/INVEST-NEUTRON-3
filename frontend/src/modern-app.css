@@ -120,19 +120,6 @@
   justify-content: flex-end;
 }
 
-.shell-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  background: var(--bg-card);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: var(--radius-full);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-muted);
-  backdrop-filter: blur(10px);
-}
-
 .phase-chip {
   display: inline-flex;
   align-items: center;

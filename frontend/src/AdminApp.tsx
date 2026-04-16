@@ -100,7 +100,7 @@ function useCountdown(snapshot: AdminSnapshot | null) {
     return () => {
       window.clearInterval(timerId)
     }
-  }, [snapshot?.endsAt, snapshot?.phase])
+  }, [snapshot])
 
   return getCountdownMs(snapshot)
 }
@@ -290,6 +290,11 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
     event.preventDefault()
     if (!socketRef.current) return
 
+    if (!secret.trim()) {
+      setAuthError('Admin secret is required.')
+      return
+    }
+
     setAuthError(null)
     setActionError(null)
 
@@ -364,11 +369,7 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
             <h2>Control the live terminal</h2>
             <p>Authenticate once, set the timer before launch, and manage the room from a single operating surface.</p>
           </div>
-          <div className="chip-row">
-            <span className="shell-chip">Timer control</span>
-            <span className="shell-chip">Round override</span>
-            <span className="shell-chip">Admin-only leaderboard</span>
-          </div>
+          <p className="status-line">Status: Sign in required</p>
         </div>
 
         <div className="host-auth-layout">
@@ -378,18 +379,22 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
             <p>Use the console to control pacing, watch submission status, and review participant movement without changing any backend contracts.</p>
           </section>
 
-          <section className="host-panel auth-panel">
+          <section className={`host-panel auth-panel ${authError || actionError ? 'panel-error' : ''}`}>
             <span className="eyebrow">Authenticate</span>
             <h3>Admin access</h3>
             <form className="host-auth-form" onSubmit={handleLogin}>
-              <label className="field">
+              <label className={`field ${authError === 'Admin secret is required.' ? 'field-error' : ''}`}>
                 <span>Admin Secret</span>
                 <input
                   aria-label="Admin Secret"
                   type="password"
                   placeholder="Enter the admin secret"
+                  required
                   value={secret}
-                  onChange={(event) => setSecret(event.target.value)}
+                  onChange={(event) => {
+                    setSecret(event.target.value)
+                    if (authError) setAuthError(null)
+                  }}
                 />
               </label>
               <button className="primary-button" type="submit">
@@ -411,6 +416,9 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
   const isFinished = snapshot.phase === 'finished'
   const leader = snapshot.leaderboard[0] ?? null
   const visibleResultCompanies = currentResults ? getVisibleCompanyIds(currentResults.round) : []
+  const timerDisplayMs = isLive || isPaused ? countdownMs : snapshot.roundDurationMs
+  const timerDisplayText = formatCountdown(timerDisplayMs)
+  const isLowTime = snapshot.phase === 'live' && timerDisplayMs <= 15000
 
   const filteredTrades = inferredTrades.filter((entry) => {
     if (roundFilter !== 'all' && String(entry.round) !== roundFilter) return false
@@ -424,19 +432,20 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
 
   return (
     <section className="host-view">
+      <div className={`timer-rail ${isLowTime ? 'low-time' : ''}`}>
+        <span className="summary-label">Round Timer</span>
+        <strong>{timerDisplayText}</strong>
+      </div>
+
       <div className="view-intro">
         <div>
           <span className="eyebrow">Admin console</span>
           <h2>Live market controls</h2>
           <p>
-            Round {snapshot.round} of {snapshot.totalRounds} • {formatPhaseLabel(snapshot.phase)}
+            Round {snapshot.round} of {snapshot.totalRounds} • {formatPhaseLabel(snapshot.phase)} • {snapshot.activeTeamsCount} active teams
           </p>
         </div>
-        <div className="chip-row">
-          <span className={`phase-chip ${snapshot.phase}`}>{formatPhaseLabel(snapshot.phase)}</span>
-          <span className="shell-chip">{snapshot.activeTeamsCount} active teams</span>
-          <span className="shell-chip">Timer {formatDuration(snapshot.roundDurationMs)}</span>
-        </div>
+        <span className={`phase-chip ${snapshot.phase}`}>{formatPhaseLabel(snapshot.phase)}</span>
       </div>
 
       <section className="host-summary-grid">
@@ -461,7 +470,7 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
               <span className="eyebrow">Round spotlight</span>
               <h3>{displayRound ? displayRound.title : 'Room not live yet'}</h3>
             </div>
-            {displayRound ? <span className="shell-chip">{displayRound.yearRange}</span> : null}
+            {displayRound ? <p className="status-line">Year {displayRound.yearRange}</p> : null}
           </div>
 
           {displayRound && (isLive || isPaused) ? (
@@ -503,13 +512,13 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
           {isFinished && leader ? <p className="empty-copy">{leader.name} closes on top with {formatCurrency(leader.totalValue)}.</p> : null}
         </section>
 
-        <section className="host-panel controls-panel">
+        <section className={`host-panel controls-panel ${actionError ? 'panel-error' : ''}`}>
           <div className="section-head">
             <div>
               <span className="eyebrow">Controls</span>
               <h3>Timer and round flow</h3>
             </div>
-            {pendingAction ? <span className="shell-chip">Running {pendingAction.replace('admin:', '')}</span> : null}
+            {pendingAction ? <p className="status-line">Running {pendingAction.replace('admin:', '')}</p> : null}
           </div>
 
           <form className="timer-form" onSubmit={handleTimerSubmit}>
@@ -596,7 +605,7 @@ export function AdminApp({ socketFactory = createSocketClient }: { socketFactory
               <span className="eyebrow">Leaderboard</span>
               <h3>Participant standings</h3>
             </div>
-            <span className="shell-chip">{snapshot.leaderboard.length} desks</span>
+            <p className="status-line">{snapshot.leaderboard.length} desks</p>
           </div>
 
           {snapshot.leaderboard.length === 0 ? (

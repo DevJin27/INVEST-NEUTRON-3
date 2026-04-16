@@ -308,6 +308,12 @@ function createSocketRuntime(options) {
       });
     });
 
+    socket.on("admin:clear-teams", async (_payload, ack) => {
+      await runAdminAction(socket, "admin:clear-teams", () => gameService.clearTeams(), ack, {
+        refreshSnapshots: "all",
+      });
+    });
+
     socket.on("admin:set-purse-value", async (payload = {}, ack) => {
       await runAdminAction(socket, "admin:set-purse-value", () => gameService.setPurseValue(payload), ack, {
         refreshSnapshots: "all",

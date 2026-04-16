@@ -571,6 +571,13 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
   const totalInvestedAmount = totalInvested(currentInvestments)
   const totalValue = currentPurse + totalInvestedAmount
   const connectionLabel = buildConnectionLabel(connectionState, snapshot?.phase)
+  const timerDisplayMs = snapshot
+    ? snapshot.phase === 'live' || snapshot.phase === 'paused'
+      ? countdownMs
+      : snapshot.roundDurationMs
+    : 0
+  const timerDisplayText = formatCountdown(timerDisplayMs)
+  const isLowTime = snapshot?.phase === 'live' && timerDisplayMs <= 15000
   const canAdjustInvestments =
     snapshot?.phase === 'live' &&
     connectionState === 'connected' &&
@@ -779,8 +786,13 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
       name: formValues.name.trim(),
     }
 
-    if (!credentials.teamId || !credentials.name) {
-      setJoinError('Team ID and team name are required.')
+    if (!credentials.teamId) {
+      setJoinError('Team ID is required.')
+      return
+    }
+
+    if (!credentials.name) {
+      setJoinError('Team name is required.')
       return
     }
 
@@ -890,11 +902,7 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
             <h2>Connect to the trading room</h2>
             <p>Join the live desk, receive the current market condition, and size positions before the round locks.</p>
           </div>
-          <div className="chip-row">
-            <span className="shell-chip">Cash account enabled</span>
-            <span className="shell-chip">Six market years</span>
-            <span className="shell-chip">Shared live terminal</span>
-          </div>
+          <p className="status-line">Status: {connectionLabel}</p>
         </div>
 
         <div className="join-layout">
@@ -904,35 +912,43 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
             <p>Review the market condition, build positions, sell only from existing holdings, and let settlement update cash when the round closes.</p>
           </section>
 
-          <section className="desk-panel join-panel">
+          <section className={`desk-panel join-panel ${joinError ? 'panel-error' : ''}`}>
             <span className="eyebrow">Terminal access</span>
             <h3>Link your team</h3>
             <form className="join-form" onSubmit={handleJoinSubmit}>
-              <label className="field">
+              <label className={`field ${joinError === 'Team ID is required.' ? 'field-error' : ''}`}>
                 <span>Team ID</span>
                 <input
                   aria-label="Team ID"
                   autoComplete="off"
+                  autoFocus
                   placeholder="desk-alpha"
+                  required
                   value={formValues.teamId}
-                  onChange={(event) => setFormValues((current) => ({ ...current, teamId: event.target.value }))}
+                  onChange={(event) => {
+                    setFormValues((current) => ({ ...current, teamId: event.target.value }))
+                    if (joinError) setJoinError(null)
+                  }}
                 />
               </label>
-              <label className="field">
+              <label className={`field ${joinError === 'Team name is required.' ? 'field-error' : ''}`}>
                 <span>Team name</span>
                 <input
                   aria-label="Team Name"
                   autoComplete="off"
                   placeholder="Alpha Desk"
+                  required
                   value={formValues.name}
-                  onChange={(event) => setFormValues((current) => ({ ...current, name: event.target.value }))}
+                  onChange={(event) => {
+                    setFormValues((current) => ({ ...current, name: event.target.value }))
+                    if (joinError) setJoinError(null)
+                  }}
                 />
               </label>
               <button className="primary-button" type="submit" disabled={connectionState === 'connecting' || connectionState === 'joining'}>
                 {connectionState === 'connecting' || connectionState === 'joining' ? 'Linking...' : 'Enter desk'}
               </button>
             </form>
-            <p className="status-line">Status: {connectionLabel}</p>
             {joinError ? <p className="message-banner error">{joinError}</p> : null}
           </section>
         </div>
@@ -942,6 +958,13 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
 
   return (
     <section className="team-view">
+      {snapshot ? (
+        <div className={`timer-rail ${isLowTime ? 'low-time' : ''}`}>
+          <span className="summary-label">Round Timer</span>
+          <strong>{timerDisplayText}</strong>
+        </div>
+      ) : null}
+
       {showResults && roundResults ? (
         <RoundResultsOverlay myTeamId={joinedCredentials.teamId} onDismiss={() => setShowResults(false)} results={roundResults} />
       ) : null}
@@ -963,13 +986,10 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
           <p>
             {snapshot ? `Round ${snapshot.round} of ${snapshot.totalRounds}` : 'Waiting for the next market window'}
             {displayRound ? ` • ${displayRound.yearRange}` : ''}
+            {` • ${connectionLabel}`}
           </p>
         </div>
-        <div className="chip-row">
-          <span className={`phase-chip ${snapshot?.phase ?? 'idle'}`}>{formatPhaseLabel(snapshot?.phase ?? 'idle')}</span>
-          {snapshot ? <span className="shell-chip">Timer {formatCountdown(countdownMs || snapshot.roundDurationMs)}</span> : null}
-          <span className="shell-chip">{connectionLabel}</span>
-        </div>
+        <span className={`phase-chip ${snapshot?.phase ?? 'idle'}`}>{formatPhaseLabel(snapshot?.phase ?? 'idle')}</span>
       </div>
 
       <PortfolioSummary
@@ -1008,24 +1028,22 @@ export function TeamDashboardApp({ socketFactory = createSocketClient }: { socke
       </section>
 
       {displayRound ? (
-        <section className="desk-panel">
+        <section className={`desk-panel ${investmentError ? 'panel-error' : ''}`}>
           <div className="section-head">
             <div>
               <span className="eyebrow">Holdings board</span>
               <h3>Build and trim positions</h3>
             </div>
-            <div className="chip-row">
-              <span className="shell-chip">{displayRound.visibleCompanyIds.length} live instruments</span>
-              <span className="shell-chip">
-                {isSubmitted
-                  ? 'Locked'
-                  : canAdjustInvestments
-                    ? 'Editable'
-                    : snapshot?.phase === 'paused'
-                      ? 'Paused'
-                      : 'Waiting'}
-              </span>
-            </div>
+            <p className="status-line">
+              {displayRound.visibleCompanyIds.length} live instruments •{' '}
+              {isSubmitted
+                ? 'Locked'
+                : canAdjustInvestments
+                  ? 'Editable'
+                  : snapshot?.phase === 'paused'
+                    ? 'Paused'
+                    : 'Waiting'}
+            </p>
           </div>
 
           <div className="allocation-grid">
@@ -1115,14 +1133,6 @@ export function MarketGameShell({
             <span className="eyebrow">Strategic market terminal</span>
             <h1>Northstar Exchange</h1>
             <p>A restrained live trading interface for participant execution and admin oversight, mapped entirely from the frontend layer.</p>
-          </div>
-
-          <div className="shell-action-column">
-            <div className="chip-row">
-              <span className="shell-chip">Frontend remapped timeline</span>
-              <span className="shell-chip">Five to six live instruments</span>
-              <span className="shell-chip">Calm execution UI</span>
-            </div>
           </div>
         </header>
 
